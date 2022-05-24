@@ -14,7 +14,7 @@ sb.set()
 class OneSize(object):
     def __init__(self,routeNo,distance,average_distance,speed,demand,peak_point_demand):
         self._beta=0.25
-        self._gammmar=25
+        self._gammar=25
         self._v_w=10
         self._v_v=6
         self._c=16000
@@ -84,6 +84,7 @@ class OneSize(object):
     def Optimal(self):
         try:
             m=gp.Model('OneSizeSystemwide')
+            m.setParam('nonconvex', 2)
 
             index_stop_period=gp.tuplelist([(x,y) for x in range(1,self._routeNo+1) for y in range(1,self._period+1)])
 
@@ -111,7 +112,7 @@ class OneSize(object):
             m.setObjective(c_total+c_p, sense=gp.GRB.MINIMIZE)
 
             m.addConstr(bus_operating==self._gammar+self._beta*size_volume,name='bus_operating_cost')
-            m.addConstrs((c_o_j_t[j,t]==2*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*bus_operating/self._speed[j-1][t-1]/size_volume for j,t in index_stop_period),name="cost_operator_jt_c")
+            m.addConstrs((c_o_j_t[j,t]*size_volume==2*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*bus_operating/self._speed[j-1][t-1] for j,t in index_stop_period),name="cost_operator_jt_c")
             m.addConstrs((c_uw_j_t[j,t]==self.v_w*self._demand[j-1][t-1]*size_volume/self._peak_point_demand[j-1][t-1] for j,t in index_stop_period),name='cost_user_waiting_jt_c')
             m.addConstrs((c_uv_j_t[j,t]==self.v_v*2*self._average_distance[j-1]*self._demand[j-1][t-1]/self._speed[j-1][t-1] for j,t in index_stop_period),name='cost_user_invehicle_jt_c')
             m.addConstrs((c_u_j_t[j,t]==c_uw_j_t[j,t]+c_uv_j_t[j,t] for j,t in index_stop_period),name='cost_user_jt_c')
@@ -123,13 +124,74 @@ class OneSize(object):
             m.addConstr(c_total==gp.quicksum(c_j_t[j,t] for j,t in index_stop_period),name='cost_total_c')
             m.addConstrs((h_jt_1[j,t]==size_volume/self._peak_point_demand[j-1][t-1] for j,t in index_stop_period),name='headway1_jt_c')
             m.addConstrs((h_jt_2[j,t]==2*self._distance[j-1]*bus_operating/self._speed[j-1][t-1]/self._demand[j-1][t-1]/self.v_w for j,t in index_stop_period),name='headway2_jt_c')
-            m.addConstrs((h_jt[j,t]==max_(h_jt_1[j,t],h_jt_2[j,t]) for j,t in index_stop_period),name='headway_jt_c')
-            m.addConstrs((n_jt[j,t]==2*self._distance[j-1]/self._speed[j-1][t-1]/h_jt[j,t] for j,t in index_stop_period),name='fleet_size_jt_c')
+            m.addConstrs((h_jt[j,t]==min_(h_jt_1[j,t],h_jt_2[j,t]) for j,t in index_stop_period),name='headway_jt_c')
+            m.addConstrs((n_jt[j,t]*h_jt[j,t]==2*self._distance[j-1]/self._speed[j-1][t-1] for j,t in index_stop_period),name='fleet_size_jt_c')
             m.addConstrs((n_t[t]==gp.quicksum(n_jt.select('*',t)) for t in range(1,self._period+1)),name='fleet_size_t_c')
-            m.addGenConstrMax(n,[n_t[t] for t in self._period+1],name='fleet_size_c')
+            m.addGenConstrMax(n,[n_t[t] for t in range(1,self._period+1)],name='fleet_size_c')
             m.addConstr(c_p==(self.c+self.e*size_volume)*self.recovery_rate/365*n,name='cost_capital_c')
 
-        except gp.GurrobiError as e:
+            m.optimize()
+
+            if m.status == GRB.OPTIMAL:
+                print(m.status)
+                self._objVal = m.objVal
+                self._result=m.getAttr('x',[c_o,c_uw,c_uv,c_u,c_total,c_p])
+                self._size_volume = m.getAttr('x', [size_volume])
+                self._bus_operating = m.getAttr('x', [bus_operating])
+                self._h_jt=m.getAttr('x',h_jt)
+                self._n=m.getAttr('x',[n])
+                self._h_jt_1=m.getAttr('x',h_jt_1)
+                self._h_jt_2=m.getAttr('x',h_jt_2)
+                self._c_o_j_t=m.getAttr('x',c_o_j_t)
+                self._c_uw_j_t=m.getAttr('x',c_uw_j_t)
+                self._c_uv_j_t=m.getAttr('x',c_uv_j_t)
+                self._c_u_j_t=m.getAttr('x',c_u_j_t)
+                self._c_j_t=m.getAttr('x',c_j_t)
+                self._n_jt=m.getAttr('x',n_jt)
+                self._n_t=m.getAttr('x',n_t)
+            elif m.status == GRB.TIME_LIMIT:
+                m.Params.timeLimit = 200
+                if m.MIPGap <= 0.05:
+                    print(m.status)
+                    print(m.MIPGap)
+                    self._objVal = m.objVal
+                    self._result = m.getAttr('x', [c_o, c_uw, c_uv, c_u, c_total, c_p])
+                    self._size_volume = m.getAttr('x', [size_volume])
+                    self._bus_operating = m.getAttr('x', [bus_operating])
+                    self._h_jt = m.getAttr('x', h_jt)
+                    self._n = m.getAttr('x', [n])
+                    self._h_jt_1 = m.getAttr('x', h_jt_1)
+                    self._h_jt_2 = m.getAttr('x', h_jt_2)
+                    self._c_o_j_t = m.getAttr('x', c_o_j_t)
+                    self._c_uw_j_t = m.getAttr('x', c_uw_j_t)
+                    self._c_uv_j_t = m.getAttr('x', c_uv_j_t)
+                    self._c_u_j_t = m.getAttr('x', c_u_j_t)
+                    self._c_j_t = m.getAttr('x', c_j_t)
+                    self._n_jt = m.getAttr('x', n_jt)
+                    self._n_t = m.getAttr('x', n_t)
+                else:
+                    m.Params.MIPGap = 0.05
+                    m.optimize()
+                    print("OK")
+                    print(m.status)
+                    self._objVal = m.objVal
+                    self._result = m.getAttr('x', [c_o, c_uw, c_uv, c_u, c_total, c_p])
+                    self._size_volume = m.getAttr('x', [size_volume])
+                    self._bus_operating = m.getAttr('x', [bus_operating])
+                    self._h_jt = m.getAttr('x', h_jt)
+                    self._n = m.getAttr('x', [n])
+                    self._h_jt_1 = m.getAttr('x', h_jt_1)
+                    self._h_jt_2 = m.getAttr('x', h_jt_2)
+                    self._c_o_j_t = m.getAttr('x', c_o_j_t)
+                    self._c_uw_j_t = m.getAttr('x', c_uw_j_t)
+                    self._c_uv_j_t = m.getAttr('x', c_uv_j_t)
+                    self._c_u_j_t = m.getAttr('x', c_u_j_t)
+                    self._c_j_t = m.getAttr('x', c_j_t)
+                    self._n_jt = m.getAttr('x', n_jt)
+                    self._n_t = m.getAttr('x', n_t)
+            return self._objVal, self._result, self._size_volume,self._bus_operating,self._h_jt,self._n,self._h_jt_1,self._h_jt_2,self._c_o_j_t,self._c_uw_j_t,self._c_uv_j_t,self._c_u_j_t,self._c_j_t,self._n_jt,self._n_t
+
+        except gp.GurobiError as e:
             print('Error code'+str(e.errno)+': '+str(e))
         except AttributeError:
             print('Encountered an attribute error')
