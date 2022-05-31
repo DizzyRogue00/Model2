@@ -121,7 +121,8 @@ class TwoSize(object):
 
             m.setObjective(c_total+c_p, sense=gp.GRB.MINIMIZE)
 
-            m.addConstrs((bus_operating[s]==self._gammar+self._beta*size_volume[s] for s in range(1,self._size_type)),name='bus_operating_cost')
+            m.addConstrs((bus_operating[s]==self._gammar+self._beta*size_volume[s] for s in range(1,self._size_type+1)),name='bus_operating_cost')
+            m.addConstrs((gp.quicksum(delta_jts[j,t,k] for k in range(1,self._size_type+1))==1 for j,t in index_stop_period),name='assignment_c')
             m.addConstrs((c_o_j_t_s[j,t,k]*size_volume[k]==2*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*bus_operating[k]/self._speed[j-1][t-1] for j,t,k in index_stop_period_size),name="cost_operator_jts_c")
             m.addConstrs((c_uw_j_t_s[j,t,k]==self.v_w*self._demand[j-1][t-1]*size_volume[k]/self._peak_point_demand[j-1][t-1] for j,t,k in index_stop_period_size),name='cost_user_waiting_jts_c')
             m.addConstrs((c_uv_j_t_s[j,t,k]==self.v_v*2*self._average_distance[j-1]*self._demand[j-1][t-1]/self._speed[j-1][t-1] for j,t,k in index_stop_period_size),name='cost_user_invehicle_jts_c')
@@ -145,7 +146,7 @@ class TwoSize(object):
             m.addConstrs((n_ts[t,k]==n_jts.prod(delta_jts,'*',t,k) for t,k in index_period_size),name='fleet_size_ts_c')
             for k in range(1,self._size_type+1):
                 m.addGenConstrMax(n_s[k],[n_ts[t,k] for t in range(1,self._period+1)],name='fleet_size'+str(k)+'_c')
-            m.addConstr(c_p==gp.quicksum((self.c+self.e*size_volume[k])*self.recovery_rate/365*n_s[k] for k in range(1,self._size_type)),name='cost_capital_c')
+            m.addConstr(c_p==gp.quicksum((self.c+self.e*size_volume[k])*self.recovery_rate/365*n_s[k] for k in range(1,self._size_type+1)),name='cost_capital_c')
 
             m.optimize()
 
@@ -233,3 +234,43 @@ class TwoSize(object):
             print('Error code'+str(e.errno)+': '+str(e))
         except AttributeError:
             print('Encountered an attribute error')
+
+    def BFGS(self):
+        def delta(x):
+            x1=x[0]
+            x2=x[1]
+            def judge(j,t):
+                if self._distance[j-1]*self._demand[j-1][t-1]/self._speed[j-1][t-1]<=self._v_w*x1*x2/(2*self._gammar):
+                    delta_j_t=1,0
+                else:
+                    delta_j_t=0,1
+                return delta_j_t
+            delta_result={(j,t):judge(j,t) for j in range(1,self._routeNo+1) for t in range(1,self._period+1)}
+            return delta_result
+
+        def headway(x,delta_j_t_s):
+            #delta_j_t_s=delta(x)
+            def headway_j_t_s(j,t,s):
+                temp1=[2*self._gammar*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*delta_j_t_s[j,t][s-1]/self._speed[j-1][t-1] for j in range(1,self._routeNo+1) for t in range(1,self._period+1)]
+                temp1=np.sum(temp1)
+                temp2=[self._v_w*self._demand[j-1][t-1]*delta_j_t_s[j,t][s-1]/self._peak_point_demand[j-1][t-1] for j in range(1,self._routeNo+1) for t in range(1,self._period+1)]
+                temp2=np.sum(temp2)
+                headway1_j_t_s=np.sqrt(temp1/temp2)/self._peak_point_demand[j-1][t-1]
+                headway2_j_t_s=2*self._distance[j-1]*(self._gammar+self._beta*x[s-1])/(self._speed[j-1][t-1]*self._demand[j-1][t-1]*self._v_w)
+                Headway_j_t_s=np.min([headway1_j_t_s,headway2_j_t_s])
+                return Headway_j_t_s
+            headway_result={(j,t):tuple(headway_j_t_s(j,t,s) for s in range(1,self._size_type)) for j in range(1,self._routeNo+1) for t in range(1,self._period+1)}
+            return headway_result
+
+        def fleet_size(x,delta_jts,headway_jts):
+            def N_ts(t,s):
+                temp1=[2*self._distance[j-1]*delta_jts[j,t][s-1]/self._speed[j-1][t-1]/headway_jts[j,t][s-1] if headway_jts[j,t][s-1]!=0 else 0 for j in range(1,self._routeNo+1)]
+                temp1=np.sum(temp1)
+                return temp1
+            N_t=[tuple(N_ts(t,s) for s in range(1,self._size_type+1)) for t in range(self._period+1)]
+            N_t_temp=[[N_t[j][i] for j in range(len(N_t))] for i in range(self._size_type)]
+            N_s=np.max(N_t_temp,axis=1)
+            N_s=tuple(N_s)
+            return N_s
+
+        #def ctp(x):
