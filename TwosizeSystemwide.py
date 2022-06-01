@@ -9,6 +9,7 @@ import os
 import math
 import copy
 from functools import reduce
+import copy
 sb.set()
 
 class TwoSize(object):
@@ -236,6 +237,9 @@ class TwoSize(object):
             print('Encountered an attribute error')
 
     def BFGS(self):
+        #delta:{(j,t):(,)}
+        #headway:{(j,t):(,)}
+        #N_s:(,)
         def delta(x):
             x1=x[0]
             x2=x[1]
@@ -259,7 +263,7 @@ class TwoSize(object):
                 headway2_j_t_s=2*self._distance[j-1]*(self._gammar+self._beta*x[s-1])/(self._speed[j-1][t-1]*self._demand[j-1][t-1]*self._v_w)
                 Headway_j_t_s=np.min([headway1_j_t_s,headway2_j_t_s])
                 return Headway_j_t_s
-            headway_result={(j,t):tuple(headway_j_t_s(j,t,s) for s in range(1,self._size_type)) for j in range(1,self._routeNo+1) for t in range(1,self._period+1)}
+            headway_result={(j,t):tuple(headway_j_t_s(j,t,s) for s in range(1,self._size_type+1)) for j in range(1,self._routeNo+1) for t in range(1,self._period+1)}
             return headway_result
 
         def fleet_size(x,delta_jts,headway_jts):
@@ -268,9 +272,63 @@ class TwoSize(object):
                 temp1=np.sum(temp1)
                 return temp1
             N_t=[tuple(N_ts(t,s) for s in range(1,self._size_type+1)) for t in range(self._period+1)]
-            N_t_temp=[[N_t[j][i] for j in range(len(N_t))] for i in range(self._size_type)]
+            N_t_temp=[[N_t[j][i] for j in range(len(N_t))] for i in range(self._size_type+1)]
             N_s=np.max(N_t_temp,axis=1)
             N_s=tuple(N_s)
             return N_s
 
-        #def ctp(x):
+        def ctp(x,delta,fleet_size):
+            c_o_temp=[(2*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*(self._gammar+self._beta*x[s-1])/self._speed[j-1][t-1]/x[s-1])*delta[j,t][s-1] for j in range(1,self._routeNo+1) for t in range(1,self._period+1) for s in range(1,self._size_type+1)]
+            c_uw_temp=[self._v_w*self._demand[j-1][t-1]*x[s-1]/self._peak_point_demand[j-1][t-1]*delta[j,t][s-1] for j in range(1,self._routeNo+1) for t in range(1,self._period+1) for s in range(1,self._size_type+1)]
+            c_uv_temp=[(2*self._v_v*self._demand[j-1][t-1]*self._average_distance[j-1]/self._speed[j-1][t-1])*delta[j,t][s-1] for j in range(1,self._routeNo+1) for t in range(1,self._period+1) for s in range(1,self._size_type+1)]
+            c_o=np.sum(c_o_temp)
+            c_uw=np.sum(c_uw_temp)
+            c_uv=np.sum(c_uv_temp)
+            c_u=c_uw+c_uv
+            c_total=c_o+c_u
+            c_p_temp=[((self._c+self._e*x[s-1])*self._recovery/365)*fleet_size[s-1] for s in range(1,self._size_type+1)]
+            c_p=np.sum(c_p_temp)
+            c_tp=c_total+c_p
+            return c_tp,c_o,c_uw,c_uv,c_u,c_total,c_p
+
+        def num_grad(x,delta,fleet_size):
+            x=list(x)
+            def num_grad_item(h,i):
+                x1=copy.copy(x)
+                x2=copy.copy(x)
+                x1[i]=x1[i]-h
+                x2[i]=x2[i]+h
+                y1,y2=ctp(x1,delta,fleet_size)[0],ctp(x2,delta,fleet_size)[0]
+                df=(y2-y1)/(2*h)
+                return df
+            df=[num_grad_item(10**-5,i) for i in range(len(x))]
+            df=np.array(df)
+            return df
+
+        def num_hess(x,delta,fleet_size):
+            x=list(x)
+            def hess_row(h,i):
+                x1=copy.copy(x)
+                x1[i]=x1[i]-h
+                df1=num_grad(x1,delta,fleet_size)
+                x2=copy.copy(x)
+                x2[i]=x2[i]+h
+                df2=num_grad(x2,delta,fleet_size)
+                d2f=(df2-df1)/(2*h)
+                return d2f
+            hess=[hess_row(10**-5,i) for i in range(len(x))]
+            hess=np.array(hess)
+            return hess
+
+        def linesearch(x,dk,delta,fleet_size):
+            x=np.array(x)
+            ak=1
+            for i in range(20):
+                newf,oldf=ctp(x+ak*dk,delta,fleet_size)[0],ctp(x,delta,fleet_size)[0]
+                if newf<oldf:
+                    return ak
+                else:
+                    ak=ak/4
+            return ak
+        
+
