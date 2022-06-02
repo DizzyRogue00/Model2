@@ -240,6 +240,7 @@ class TwoSize(object):
         #delta:{(j,t):(,)}
         #headway:{(j,t):(,)}
         #N_s:(,)
+        #s1<s2
         def delta(x):
             x1=x[0]
             x2=x[1]
@@ -330,5 +331,56 @@ class TwoSize(object):
                 else:
                     ak=ak/4
             return ak
-        
+
+        maxiter=10**4
+        epsilon=10**-5
+        #initial solution
+        volume_min = np.min(self._peak_point_demand)
+        volume_max=np.max(self._peak_point_demand)
+        s_min_temp=[2*self._gammar*self._distance[j-1]*volume_min/self._speed[j-1][t-1] for j in range(1,self._routeNo+1) for t in range(1,self._period+1)]
+        s_min=np.sqrt(np.sum(s_min_temp)/(self._v_w*self._routeNo*self._period))
+        s_max_temp = [2 * self._gammar * self._distance[j - 1] * volume_max / self._speed[j - 1][t - 1] for j in
+                      range(1, self._routeNo + 1) for t in range(1, self._period + 1)]
+        s_max = np.sqrt(np.sum(s_max_temp) / (self._v_w * self._routeNo * self._period))
+        x_init=np.array([s_min,s_max])
+        #delta_init=delta(x_init)
+        #headway_init=headway(x_init,delta_init)
+        #fleet_size_init=fleet_size(x_init,delta_init,headway_init)
+        #ctp_init=ctp(x_init,delta_init,fleet_size_init)
+        def BFGS_item(x):
+            iter_no=0
+            delta_x=delta(x)
+            headway_x=headway(x,delta_x)
+            fleet_size_x=fleet_size(x,delta_x,headway_x)
+            ctp_x=ctp(x,delta_x,fleet_size_x)
+            grad=num_grad(x,delta_x,fleet_size_x)
+            Bk=np.eye(x.size)
+            while True:
+                if np.linalg.norm(grad)<epsilon:
+                    yield iter_no,{"solution":x,"delta":delta_x,"headway":headway_x,"fleet":fleet_size_x,"objValue":ctp_x}
+                    return
+                if iter_no>maxiter:
+                    yield iter_no, {"solution": x, "delta": delta_x, "headway": headway_x, "fleet": fleet_size_x,
+                                    "objValue": ctp_x}
+                    return
+                yield iter_no, {"solution": x, "delta": delta_x, "headway": headway_x, "fleet": fleet_size_x,
+                                "objValue": ctp_x}
+                dk=-np.dot((np.linalg.inv(Bk)),grad)
+                ak=linesearch(x,dk,delta_x.fleet_size_x)
+                x=x+ak*dk
+                delta_x = delta(x)
+                headway_x = headway(x, delta_x)
+                fleet_size_x = fleet_size(x, delta_x, headway_x)
+                ctp_x = ctp(x, delta_x, fleet_size_x)
+                sk=ak*dk
+                grad_temp= num_grad(x, delta_x, fleet_size_x)
+                yk=grad_temp-grad
+                grad=grad_temp
+                Bk=Bk-np.dot(np.dot(np.dot(Bk,sk).reshape(sk.shape[0],1),sk.reshape(1,sk.shape[0])),Bk)/np.dot(np.dot(sk.reshape(1,sk.shape[0]),Bk),sk)+np.dot(yk.reshape(yk.shape[0],1),yk.reshape(1,yk.shape[0]))/np.dot(yk.reshape(1,yk.shape[0]),sk)
+                iter_no+=1
+
+        result=BFGS_item(x_init)
+        result=dict(result)
+        return result
+
 
