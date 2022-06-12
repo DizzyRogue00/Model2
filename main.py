@@ -32,20 +32,26 @@ if __name__=="__main__":
         [125, 250, 250, 125, 125, 125, 125, 125, 125, 125, 125, 250, 250, 125, 125, 125, 125, 125]
     ]
 
-
+    '''
     #OneSizeSystemwide
     #def __init__(self,routeNo,distance,average_distance,speed,demand,peak_point_demand):
     case1=oss.OneSize(routeNo=5,distance=[16,20,16,24,20],average_distance=[5,7,5,8,6],speed=speed,demand=demand,peak_point_demand=peak_point_demand)
     result1=case1.Optimal()
     print(result1)
-
     '''
+
     #TwoSizeSystemwide
     #def __init__(self,routeNo,distance,average_distance,speed,demand,peak_point_demand,size_type):
     case2=tss.TwoSize(routeNo=5,distance=distance,average_distance=average_distance,speed=speed,demand=demand,peak_point_demand=peak_point_demand,size_type=2)
-    result2=case2.Optimal()
-    print(result2)
-    for i in range(22):
-        print(result2[i])
-    '''
+    # can not run #
+    #result2=case2.Optimal()
+    result2=case2.BFGS()
+    print(result2[len(result2)-1]['solution'])
+    print(result2[len(result2) - 1]['objValue'])
+    print(result2[len(result2) - 1]['headway'])
+    print(result2[len(result2) - 1]['delta'])
+    print(result2[len(result2) - 1]['fleet'])
+    print(result2[0]['solution'])
+    print(result2[0]['objValue'])
+
     pass

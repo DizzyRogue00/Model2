@@ -93,6 +93,7 @@ class OneSize(object):
             h_jt=m.addVars(index_stop_period,name='headway_jt')
             h_jt_1=m.addVars(index_stop_period,name='headway1_jt')
             h_jt_2=m.addVars(index_stop_period,name='headway2_jt')
+            h_jt_2_temp = m.addVars(index_stop_period, name='headway2_jt_temp')
             c_o_j_t=m.addVars(index_stop_period,name='cost_operator_jt')
             c_uw_j_t=m.addVars(index_stop_period,name='cost_user_waiting_jt')
             c_uv_j_t=m.addVars(index_stop_period,name='cost_user_invehicle_jt')
@@ -123,7 +124,8 @@ class OneSize(object):
             m.addConstr(c_u==gp.quicksum(c_u_j_t[j,t] for j,t in index_stop_period),name='cost_user_c')
             m.addConstr(c_total==gp.quicksum(c_j_t[j,t] for j,t in index_stop_period),name='cost_total_c')
             m.addConstrs((h_jt_1[j,t]==size_volume/self._peak_point_demand[j-1][t-1] for j,t in index_stop_period),name='headway1_jt_c')
-            m.addConstrs((h_jt_2[j,t]==2*self._distance[j-1]*bus_operating/self._speed[j-1][t-1]/self._demand[j-1][t-1]/self.v_w for j,t in index_stop_period),name='headway2_jt_c')
+            m.addConstrs((h_jt_2_temp[j,t]==2*self._distance[j-1]*bus_operating/self._speed[j-1][t-1]/self._demand[j-1][t-1]/self.v_w for j,t in index_stop_period),name='headway2_jt_temp_c')
+            m.addConstrs((h_jt_2[j,t]*h_jt_2[j,t]==h_jt_2_temp[j,t] for j,t in index_stop_period),name='headway2_jt_c')
             m.addConstrs((h_jt[j,t]==min_(h_jt_1[j,t],h_jt_2[j,t]) for j,t in index_stop_period),name='headway_jt_c')
             m.addConstrs((n_jt[j,t]*h_jt[j,t]==2*self._distance[j-1]/self._speed[j-1][t-1] for j,t in index_stop_period),name='fleet_size_jt_c')
             m.addConstrs((n_t[t]==gp.quicksum(n_jt.select('*',t)) for t in range(1,self._period+1)),name='fleet_size_t_c')
@@ -189,7 +191,7 @@ class OneSize(object):
                     self._c_j_t = m.getAttr('x', c_j_t)
                     self._n_jt = m.getAttr('x', n_jt)
                     self._n_t = m.getAttr('x', n_t)
-            return self._objVal, self._result, self._size_volume,self._bus_operating,self._h_jt,self._n,self._h_jt_1,self._h_jt_2,self._c_o_j_t,self._c_uw_j_t,self._c_uv_j_t,self._c_u_j_t,self._c_j_t,self._n_jt,self._n_t
+            return self._objVal, self._result, self._size_volume,self._n,self._bus_operating,self._h_jt,self._h_jt_1,self._h_jt_2,self._c_o_j_t,self._c_uw_j_t,self._c_uv_j_t,self._c_u_j_t,self._c_j_t,self._n_jt,self._n_t
 
         except gp.GurobiError as e:
             print('Error code'+str(e.errno)+': '+str(e))
