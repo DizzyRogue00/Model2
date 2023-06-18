@@ -57,8 +57,8 @@ class FOT(object):
         self._m_j=np.random.randint(2,4,routeNo)
         self._d_i,self._d_j=self.generate_freight_demand()
 
-        self._eta=1
-        #self._v_p=
+        self._eta=0.5
+        self._v_p=1500#the weight of one parcel is 0.5 tons.
 
         self._demand=demand
         self._peak_point_demand=peak_point_demand
