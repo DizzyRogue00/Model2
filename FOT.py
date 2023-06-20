@@ -375,6 +375,7 @@ class FOT(object):
                 for j,t in index_line_period
             )
             m2_obj=m2_obj+lambda_3*(m2_S[1]-m2_S[2]+0.5)
+            m2.addConstr(m2_obj>=1e-4)
 
             m2.setObjective(m2_obj,gp.GRB.MINIMIZE)
             m2.update()
