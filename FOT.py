@@ -1,5 +1,5 @@
 import gurobipy as gp
-from gurobipy impot *
+from gurobipy import *
 import numpy as np
 import pandas as pd
 
@@ -55,7 +55,6 @@ class FOT(object):
         self._recovery=0.1359
 
         self._m_j=np.random.randint(2,4,routeNo)
-        self._d_i,self._d_j=self.generate_freight_demand()
 
         self._eta=0.5
         self._v_p=1500#the weight of one parcel is 0.5 tons.
@@ -69,6 +68,9 @@ class FOT(object):
         self._speed=speed
         self._period = len(speed[0])
         self._routeNo=routeNo
+
+        self._d_i, self._d_j = self.generate_freight_demand()
+        print(self._m_j,self._d_j)
 
         self._path='data.pickle'
 
@@ -172,7 +174,7 @@ class FOT(object):
 
         index_line_period = gp.tuplelist([(line, time) for line in range(1, self._routeNo + 1) for time in range(1, self._period + 1)])
 
-        S=m1.addVars(range(1,3),name='S')
+        S=m1.addVars(range(1,3),lb=1e-3,name='S')
         S_inverse=m1.addVars(range(1,3),name='S_inverse')
         h_2=m1.addVars(index_line_period,name='h_2')
         u_0=m1.addVars(index_line_period,name='u_0')
@@ -196,10 +198,10 @@ class FOT(object):
         m1.addConstrs((2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/y['N_hat'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
                        +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1]*y['N_hat'][j,t])
                        -y['delta'][j,t]/self._peak_point_demand[j-1][t-1]*S[1]
-                       -(1-y['delta'][j, t])/ self._peak_point_demand[j - 1][t - 1] * S[2] for j,t in index_line_period),name='sub_1')
+                       -(1-y['delta'][j, t])/ self._peak_point_demand[j - 1][t - 1] * S[2]<=0 for j,t in index_line_period),name='sub_1')
         m1.addConstrs((2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/y['N_hat'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
                        +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1]*y['N_hat'][j,t])
-                       -h_2[j,t] for j,t in index_line_period),name='sub_2')
+                       -h_2[j,t]<=0 for j,t in index_line_period),name='sub_2')
         m1.addConstr(S[1] - S[2] + 0.5 <= 0,name='sub_3')
         m1.addConstr(gp.quicksum(
             u_0[j,t]*(y['q'][j, t] * S[1] - self._eta * (S[2] - S[1]) * self._peak_point_demand[j-1][t-1])+
@@ -265,17 +267,20 @@ class FOT(object):
 
         m1.setObjective(obj,gp.GRB.MINIMIZE)
         m1.update()
+        #m1.write('out.lp')
+        m1.optimize()
 
         print(m1.status)
         logger.info('Sub Problem status: {}'.format(m1.status))
         result_dict = {}
-        if m1.status=GRB.OPTIMAL:
+        if m1.status==GRB.OPTIMAL:
             result_dict['objval']=m1.objVal
-            result_dict['S']=m1.getAttr('x',S)
-            result_dict['u_0']=m1.getAttr('x',u_0)
-            result_dict['u_1'] = m1.getAttr('x', u_1)
-            result_dict['u_2'] = m1.getAttr('x', u_2)
-            result_dict['u_3'] = m1.getAttr('x', u_3)
+            result_dict['S']=dict(m1.getAttr('x',S))
+            result_dict['u_0']=dict(m1.getAttr('x',u_0))
+            result_dict['u_1'] = dict(m1.getAttr('x', u_1))
+            result_dict['u_2'] = dict(m1.getAttr('x', u_2))
+            result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
+            #logger.info(result_dict['u_3'])
             result_dict['v_hat']={(j,t):self._speed[j-1][t-1] * self._distance[j-1] * self._peak_point_demand[j-1][t-1] / (
                         self._alpha * self._distance[j-1] * self._peak_point_demand[j-1][t-1] + self._t_u * y['q'][j, t] *
                         self._speed[j-1][t-1] * result_dict['S'][1]) for j,t in index_line_period}
@@ -286,11 +291,11 @@ class FOT(object):
             result_dict['headway']={key:np.min((h1_hat[key],h2_hat[key])) for key in index_line_period}
         elif m1.status == GRB.TIME_LIMIT:
             result_dict['objval'] = m1.objVal
-            result_dict['S'] = m1.getAttr('x', S)
-            result_dict['u_0'] = m1.getAttr('x', u_0)
-            result_dict['u_1'] = m1.getAttr('x', u_1)
-            result_dict['u_2'] = m1.getAttr('x', u_2)
-            result_dict['u_3'] = m1.getAttr('x', u_3)
+            result_dict['S'] = dict(m1.getAttr('x', S))
+            result_dict['u_0'] = dict(m1.getAttr('x', u_0))
+            result_dict['u_1'] = dict(m1.getAttr('x', u_1))
+            result_dict['u_2'] = dict(m1.getAttr('x', u_2))
+            result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
             result_dict['v_hat'] = {
                 (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] / (
                         self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
@@ -370,19 +375,19 @@ class FOT(object):
         m.addConstrs((xi[item]>=X[item]+delta[item]-1 for item in index_line_period),name='c_3')
         m.addConstrs((delta[item]+X[item]<=2 for item in index_line_period),name='c_4')
         m.addConstrs((delta[item]>=X[item] for item in index_line_period),name='c_5')
-        m.addConstr(gp.quicksum(delta[item] for item in index_line_period)>0,name='c_6')
+        m.addConstr(gp.quicksum(delta[item] for item in index_line_period)>=1e-4,name='c_6')#> -> >=
         m.addConstrs((q.sum(j,'*')<=self._d_j[j-1] for j in range(1,self._routeNo+1)),name='c_7')
         m.addConstrs((q[j,t]>=0 for j,t in index_line_period),name='c_8')
         m.addConstrs((q[j,t]<=self._d_j[j-1] for j,t in index_line_period),name='c_9')
-        m.addConstrs((q[j,t]>(X[j,t]-1)*self._d_j[j-1] for j,t in index_line_period),name='c_10')
+        m.addConstrs((q[j,t]>=(X[j,t]-1)*self._d_j[j-1]+1e-4 for j,t in index_line_period),name='c_10')#> -> >=
         m.addConstrs((q[j,t]<=X[j,t]*self._d_j[j-1] for j,t in index_line_period),name='c_11')
         m.addConstrs((zeta[j,t]-xi[j,t]*self._d_j[j-1]<=0 for j,t in index_line_period),name='c_12')
         m.addConstrs((zeta[j,t]>=0 for j,t in index_line_period),name='c_13')
         m.addConstrs((zeta[j,t]-q[j,t]<=0 for j,t in index_line_period), name='c_14')
         m.addConstrs((zeta[j,t]-q[j,t]+self._d_j[j-1]-xi[j,t]*self._d_j[j-1]>=0 for j,t in index_line_period), name=
                      'c_15')
-        m.addConstrs((N_hat[j,t]>0 for j,t in index_line_period),name='c_16')
-        m.addConstrs((N_bar[s]>0 for s in range(1,3)),name='c_17')
+        m.addConstrs((N_hat[j,t]>=1e-4 for j,t in index_line_period),name='c_16')#> -> >=
+        m.addConstrs((N_bar[s]>=1e-4 for s in range(1,3)),name='c_17')#> -> >=
 
         m.setObjective(y_0,sense=GRB.MINIMIZE)
         m.Params.lazyConstraints=1
@@ -477,20 +482,20 @@ class FOT(object):
         # delta: delta_j_t
         # xi: xi_j_t
         # zeta: zeta_j_t
+
         try:
             m.optimize()
-            print(m.status)
             logger.info('Master Problem status: {}'.format(m.status))
             if m.status==GRB.OPTIMAL:
                 y_dict={}
                 y_dict['y_0']=m.objVal
-                y_dict['N_hat']=m.getAttr('x',m_N_hat)
-                y_dict['N_bar']=m.getAttr('x',m_N_bar)
-                y_dict['q']=m.getAttr('x',m_q)
-                y_dict['X']=m.getAttr('x'.m_X)
-                y_dict['delta']=m.getAttr('x',m_delta)
-                y_dict['xi']=m.getAttr('x',m_xi)
-                y_dict['zeta']=m.getAttr('x',m_zeta)
+                y_dict['N_hat']=dict(m.getAttr('x',m_N_hat))
+                y_dict['N_bar']=dict(m.getAttr('x',m_N_bar))
+                y_dict['q']=dict(m.getAttr('x',m_q))
+                y_dict['X']=dict(m.getAttr('x',m_X))
+                y_dict['delta']=dict(m.getAttr('x',m_delta))
+                y_dict['xi']=dict(m.getAttr('x',m_xi))
+                y_dict['zeta']=dict(m.getAttr('x',m_zeta))
                 return y_dict
         except gp.GurobiError as e:
             logger.exception('Error'+str(e.errno))
@@ -524,8 +529,31 @@ class FOT(object):
                 UB=min(UB,ob)
 
                 y=self.solveMaster(m,result_s)
+
+                # print(result_s['u_0'])
+                # print(result_s['u_1'])
+                # print(result_s['u_2'])
+                # print(result_s['u_3'])
+                print(result_s['S'])
+                print(result_s['headway'])
+                print(y['N_hat'])
+                print(y['N_bar'])
+                print(y['q'])
+                print(y['X'])
+                print(y['delta'])
+                print(y['xi'])
+                print(y['zeta'])
+
+                # N_hat: N_j_t
+                # N_bar: N_s
+                # q: q_j_t
+                # X: X_j_t
+                # delta: delta_j_t
+                # xi: xi_j_t
+                # zeta: zeta_j_t
                 pickle.dump(y,f)
-                obj=y['objval']
+
+                obj=y['y_0']
                 LB=max(LB,obj)
 
                 tol=UB-LB
