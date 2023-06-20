@@ -56,7 +56,7 @@ class FOT(object):
 
         self._m_j=np.random.randint(2,4,routeNo)
 
-        self._eta=0.5
+        self._eta=0.25
         self._v_p=1500#the weight of one parcel is 0.5 tons.
 
         self._demand=demand
@@ -152,7 +152,7 @@ class FOT(object):
         value=np.max(self._m_j)
         d_i=np.zeros((self._routeNo,value))
         for row,item in enumerate(self._m_j):
-            d_i[row, :item] = np.random.randint(1, 30, item)
+            d_i[row, :item] = np.random.randint(40, 100, item)
         d_j=d_i.sum(axis=1)
         return d_i,d_j
 
@@ -174,7 +174,7 @@ class FOT(object):
 
         index_line_period = gp.tuplelist([(line, time) for line in range(1, self._routeNo + 1) for time in range(1, self._period + 1)])
 
-        S=m1.addVars(range(1,3),lb=1e-3,name='S')
+        S=m1.addVars(range(1,3),lb=10,ub=200,name='S')
         S_inverse=m1.addVars(range(1,3),name='S_inverse')
         h_2=m1.addVars(index_line_period,name='h_2')
         u_0=m1.addVars(index_line_period,name='u_0')
@@ -202,7 +202,7 @@ class FOT(object):
         m1.addConstrs((2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/y['N_hat'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
                        +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1]*y['N_hat'][j,t])
                        -h_2[j,t]<=0 for j,t in index_line_period),name='sub_2')
-        m1.addConstr(S[1] - S[2] + 0.5 <= 0,name='sub_3')
+        m1.addConstr(S[1] - S[2] + 1 <= 0,name='sub_3')
         m1.addConstr(gp.quicksum(
             u_0[j,t]*(y['q'][j, t] * S[1] - self._eta * (S[2] - S[1]) * self._peak_point_demand[j-1][t-1])+
             u_1[j,t]*(2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/y['N_hat'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
@@ -212,7 +212,7 @@ class FOT(object):
             u_2[j,t]*(2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/y['N_hat'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
                        +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1]*y['N_hat'][j,t])
                        -h_2[j,t]) for j,t in index_line_period
-        )+u_3*(S[1]-S[2]+0.5)>=-1e-4,name='sub_4')
+        )+u_3*(S[1]-S[2]+1)>=-1e-4,name='sub_4')
 
         #2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._gammar/self._speed[j-1][t-1]*S_inverse[1]+2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._beta/self._speed[j-1][t-1]+2*self._gammar*self._t_u*y['q'][j,t]+2*self._beta*self._t_u*y['q'][j,t]*S[1]
         #self._v_w*self._demand[j-1][t-1]/self._peak_point_demand[j-1][t-1]*S[1]
@@ -332,7 +332,7 @@ class FOT(object):
             m2.setParam('nonconvex', 2)
             m2.Params.timeLimit = 200
 
-            m2_S = m2.addVars(range(1, 3), lb=1e-3, name='m2_S')
+            m2_S = m2.addVars(range(1, 3), lb=10,ub=200, name='m2_S')
             m2_h_2 = m2.addVars(index_line_period, name='m2_h_2')
             lambda_0 = m2.addVars(index_line_period, name='lambda_0')
             lambda_1 = m2.addVars(index_line_period, name='lambda_1')
@@ -375,13 +375,13 @@ class FOT(object):
                 for j,t in index_line_period
             )
             m2_obj=m2_obj+lambda_3*(m2_S[1]-m2_S[2]+0.5)
-            m2.addConstr(m2_obj>=1e-4)
+            m2.addConstr(m2_obj>=1e-10)
 
             m2.setObjective(m2_obj,gp.GRB.MINIMIZE)
             m2.update()
             m2.optimize()
 
-            result_dict['objval'] = m2.objVal
+            result_dict['objval'] = float('inf')
             result_dict['S'] = dict(m2.getAttr('x', m2_S))
             result_dict['lambda_0'] = dict(m2.getAttr('x', lambda_0))
             result_dict['lambda_1'] = dict(m2.getAttr('x', lambda_1))
@@ -670,8 +670,8 @@ class FOT(object):
                 # print(result_s['u_1'])
                 # print(result_s['u_2'])
                 # print(result_s['u_3'])
-                # print(result_s['S'])
-                # print(result_s['headway'])
+                print(result_s['S'])
+                print(result_s['headway'])
                 # print(y['N_hat'])
                 # print(y['N_bar'])
                 # print(y['q'])
@@ -693,6 +693,8 @@ class FOT(object):
                 LB=max(LB,obj)
 
                 tol=UB-LB
+                logger.info("tol: %s"%(tol))
+                logger.info("y[q]: %s"%(y['q']))
                 iter+=1
                 UB_LB_tol_dict[iter]=(UB,LB,tol)
             pickle.dump(UB_LB_tol_dict,f)
