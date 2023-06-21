@@ -56,7 +56,7 @@ class FOT(object):
 
         self._m_j=np.random.randint(2,4,routeNo)
 
-        self._eta=0.25
+        self._eta=0.125
         self._v_p=1500#the weight of one parcel is 0.5 tons.
 
         self._demand=demand
@@ -174,7 +174,7 @@ class FOT(object):
 
         index_line_period = gp.tuplelist([(line, time) for line in range(1, self._routeNo + 1) for time in range(1, self._period + 1)])
 
-        S=m1.addVars(range(1,3),lb=10,ub=100,name='S')
+        S=m1.addVars(range(1,3),lb=1,ub=100,name='S')
         S_inverse=m1.addVars(range(1,3),name='S_inverse')
         h_2=m1.addVars(index_line_period,name='h_2')
         u_0=m1.addVars(index_line_period,name='u_0')
@@ -193,25 +193,25 @@ class FOT(object):
         #(2*self._distance[j-1]*(self._gammar*(1-(1-self._alpha)*y['X'][j,t]*y['delta'][j,t])+self._beta*y['delta'][j,t]*(1-(1-self._alpha)*y['X'][j,t])*S[1]+self._beta*(1-y['delta'][j,t])*S[2]))/self._speed[j-1][t-1]
 
         m1.addConstrs((S[s]*S_inverse[s]==1 for s in range(1,3)),name='aux_0')
-        m1.addConstrs(((self._v_w*self._demand[j-1][t-1]+2*self._alpha*self._v_v*self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*self._demand[j-1][t-1]*self._peak_point_demand[j-1][t-1]*self._average_distance[j-1]*y['X'][j,t]*y['delta'][j,t]/(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._speed[j-1][t-1]))*h_2[j,t]*h_2[j,t]==(2*self._distance[j-1]*(self._gammar*(1-(1-self._alpha)*y['X'][j,t]*y['delta'][j,t])+self._beta*y['delta'][j,t]*(1-(1-self._alpha)*y['X'][j,t])*S[1]+self._beta*(1-y['delta'][j,t])*S[2]))/self._speed[j-1][t-1] for j,t in index_line_period),name='aux_1')
+        m1.addConstrs(((self._v_w*self._demand[j-1][t-1]+2*self._alpha*self._v_v*self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*self._demand[j-1][t-1]*self._peak_point_demand[j-1][t-1]*self._average_distance[j-1]*y['X'][j,t]*y['delta'][j,t]/(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._speed[j-1][t-1]))*h_2[j,t]*h_2[j,t]-(2*self._distance[j-1]*(self._gammar*(1-(1-self._alpha)*y['X'][j,t]*y['delta'][j,t])+self._beta*y['delta'][j,t]*(1-(1-self._alpha)*y['X'][j,t])*S[1]+self._beta*(1-y['delta'][j,t])*S[2]))/self._speed[j-1][t-1]==0 for j,t in index_line_period),name='aux_1')
         m1.addConstrs((y['q'][j, t] * S[1] - self._eta * (S[2] - S[1]) * self._peak_point_demand[j-1][t-1] <= 0 for j,t in index_line_period),name='sub_0')
-        m1.addConstrs((2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/y['N_hat'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
-                       +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1]*y['N_hat'][j,t])
-                       -y['delta'][j,t]/self._peak_point_demand[j-1][t-1]*S[1]
-                       -(1-y['delta'][j, t])/ self._peak_point_demand[j - 1][t - 1] * S[2]<=0 for j,t in index_line_period),name='sub_1')
-        m1.addConstrs((2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/y['N_hat'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
-                       +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1]*y['N_hat'][j,t])
-                       -h_2[j,t]<=0 for j,t in index_line_period),name='sub_2')
+        m1.addConstrs((2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
+                       +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1])
+                       -y['delta'][j,t]/self._peak_point_demand[j-1][t-1]*S[1]*y['N_hat'][j,t]
+                       -(1-y['delta'][j, t])/ self._peak_point_demand[j - 1][t - 1] * S[2]*y['N_hat'][j,t]<=0 for j,t in index_line_period),name='sub_1')
+        m1.addConstrs((2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
+                       +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1])
+                       -h_2[j,t]*y['N_hat'][j,t]<=0 for j,t in index_line_period),name='sub_2')
         m1.addConstr(self._eta*(S[1] - S[2]) + 1 <= 0,name='sub_3')
         m1.addConstr(gp.quicksum(
             u_0[j,t]*(y['q'][j, t] * S[1] - self._eta * (S[2] - S[1]) * self._peak_point_demand[j-1][t-1])+
-            u_1[j,t]*(2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/y['N_hat'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
-                       +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1]*y['N_hat'][j,t])
-                       -y['delta'][j,t]/self._peak_point_demand[j-1][t-1]*S[1]
-                       -(1-y['delta'][j, t])/ self._peak_point_demand[j - 1][t - 1] * S[2])+
-            u_2[j,t]*(2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/y['N_hat'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
-                       +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1]*y['N_hat'][j,t])
-                       -h_2[j,t]) for j,t in index_line_period
+            u_1[j,t]*(2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
+                       +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1])
+                       -y['delta'][j,t]/self._peak_point_demand[j-1][t-1]*S[1]*y['N_hat'][j,t]
+                       -(1-y['delta'][j, t])/ self._peak_point_demand[j - 1][t - 1] * S[2]*y['N_hat'][j,t])+
+            u_2[j,t]*(2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
+                       +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1])
+                       -h_2[j,t]*y['N_hat'][j,t]) for j,t in index_line_period
         )+u_3*(self._eta*(S[1]-S[2])+1)>=-1e-4,name='sub_4')
 
         #2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._gammar/self._speed[j-1][t-1]*S_inverse[1]+2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._beta/self._speed[j-1][t-1]+2*self._gammar*self._t_u*y['q'][j,t]+2*self._beta*self._t_u*y['q'][j,t]*S[1]
@@ -336,7 +336,7 @@ class FOT(object):
             m2.setParam('nonconvex', 2)
             m2.Params.timeLimit = 200
 
-            m2_S = m2.addVars(range(1, 3), lb=10,ub=100, name='m2_S')
+            m2_S = m2.addVars(range(1, 3), lb=1,ub=100, name='m2_S')
             m2_h_2 = m2.addVars(index_line_period, name='m2_h_2')
             lambda_0 = m2.addVars(index_line_period, name='lambda_0')
             lambda_1 = m2.addVars(index_line_period, name='lambda_1')
@@ -362,20 +362,20 @@ class FOT(object):
                 for j,t in index_line_period
             )
             m2_obj=m2_obj+gp.quicksum(
-                lambda_1[j,t]*(2 * self._distance[j - 1] * y['X'][j, t] * y['delta'][j, t] / y['N_hat'][j, t] * (
+                lambda_1[j,t]*(2 * self._distance[j - 1] * y['X'][j, t] * y['delta'][j, t] /  (
                             self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
                             y['q'][j, t] * self._speed[j - 1][t - 1] * m2_S[1]) / (
                             self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1])
                 + 2 * self._distance[j - 1] * (1 - y['X'][j, t] * y['delta'][j, t]) / (
-                            self._speed[j - 1][t - 1] * y['N_hat'][j, t])
-                - y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] * m2_S[1]
-                - (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] * m2_S[2])
+                            self._speed[j - 1][t - 1] )
+                - y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] * m2_S[1]*y['N_hat'][j,t]
+                - (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] * m2_S[2]*y['N_hat'][j,t])
                 for j,t in index_line_period
             )
             m2_obj=m2_obj+gp.quicksum(
-                lambda_2[j,t]*(2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/y['N_hat'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*m2_S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
-                       +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1]*y['N_hat'][j,t])
-                       -m2_h_2[j,t])
+                lambda_2[j,t]*(2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]/(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*m2_S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
+                       +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1])
+                       -m2_h_2[j,t]*y['N_hat'][j,t])
                 for j,t in index_line_period
             )
             m2_obj=m2_obj+lambda_3*(self._eta*(m2_S[1]-m2_S[2])+1)
@@ -397,6 +397,7 @@ class FOT(object):
                         self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
                         y['q'][j, t] *
                         self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
+            '''
             h1_hat = {(j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
                               result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for
                       j, t in index_line_period}
@@ -404,6 +405,8 @@ class FOT(object):
             result_dict['headway'] = {key: np.min((h1_hat[key], h2_hat[key])) for key in index_line_period}
             result_dict['headway_1'] = h1_hat
             result_dict['headway_2'] = h2_hat
+            '''
+            result_dict['headway_2']= dict(m2.getAttr('x', m2_h_2))
             result_dict['status'] = 2
 
             logger.info('Sub Problem status (infeasible): {}'.format(m2.status))
@@ -447,7 +450,8 @@ class FOT(object):
         # xi: xi_j_t
         # zeta: zeta_j_t
         y_0 = m.addVar(name='y_0')
-        N_hat=m.addVars(index_line_period,name='N_hat')
+        N_hat=m.addVars(index_line_period,lb=1,ub=100,name='N_hat')
+        N_tilde=m.addVars(index_line_period,name='N_tilde')
         N_bar=m.addVars(range(1,3),name='N_bar')
         q=m.addVars(index_line_period,name='q')
         X=m.addVars(index_line_period,vtype=GRB.BINARY,name='X')
@@ -464,15 +468,21 @@ class FOT(object):
         m.addConstrs((q.sum(j,'*')<=self._d_j[j-1] for j in range(1,self._routeNo+1)),name='c_7')
         m.addConstrs((q[j,t]>=0 for j,t in index_line_period),name='c_8')
         m.addConstrs((q[j,t]<=self._d_j[j-1] for j,t in index_line_period),name='c_9')
-        m.addConstrs((q[j,t]>=(X[j,t]-1)*self._d_j[j-1]+1e-3 for j,t in index_line_period),name='c_10')#> -> >=
+        m.addConstrs((q[j,t]>=(X[j,t]-1)*self._d_j[j-1]+1 for j,t in index_line_period),name='c_10')#> -> >=
         m.addConstrs((q[j,t]<=X[j,t]*self._d_j[j-1] for j,t in index_line_period),name='c_11')
         m.addConstrs((zeta[j,t]-xi[j,t]*self._d_j[j-1]<=0 for j,t in index_line_period),name='c_12')
         m.addConstrs((zeta[j,t]>=0 for j,t in index_line_period),name='c_13')
         m.addConstrs((zeta[j,t]-q[j,t]<=0 for j,t in index_line_period), name='c_14')
         m.addConstrs((zeta[j,t]-q[j,t]+self._d_j[j-1]-xi[j,t]*self._d_j[j-1]>=0 for j,t in index_line_period), name=
                      'c_15')
-        m.addConstrs((N_hat[j,t]>=1 for j,t in index_line_period),name='c_16')#> -> >=
-        m.addConstrs((N_bar[s]>=1 for s in range(1,3)),name='c_17')#> -> >=
+        m.addConstrs((N_tilde[j,t]-100*delta[j,t]<=0 for j,t in index_line_period),name='c_16')
+        m.addConstrs((N_tilde[j,t]-delta[j,t]>=0 for j,t in index_line_period),name='c_17')
+        m.addConstrs((N_tilde[j,t]-N_hat[j,t]+100-100*delta[j,t]>=0 for j,t in index_line_period),name='c_18')
+        m.addConstrs((N_tilde[j,t]-N_hat[j,t]+1-delta[j,t]<=0 for j,t in index_line_period),name='c_19')
+        m.addConstrs((N_bar[1]>=N_tilde.sum('*',t) for t in range(1,self._period+1)),name='c_20')
+        m.addConstrs((N_bar[2]>=N_hat.sum('*',t)-N_tilde.sum('*',t) for t in range(1,self._period+1)),name='c_21')
+        m.addConstrs((N_hat[j,t]>=1 for j,t in index_line_period),name='c_22')#> -> >=
+        m.addConstrs((N_bar[s]>=0 for s in range(1,3)),name='c_23')#> -> >=
 
         m.setObjective(y_0,sense=GRB.MINIMIZE)
         m.Params.lazyConstraints=1
@@ -494,12 +504,13 @@ class FOT(object):
             lambda_2=sub_result_dict['lambda_2']#lambda_2[j,t]
             lambda_3=sub_result_dict['lambda_3']#lambda_3
         v_hat=sub_result_dict['v_hat']#v_hat[j,t]
-        headway=sub_result_dict['headway']#headway[j,t]
-        headway_1=sub_result_dict['headway_1']
-        headway_2=sub_result_dict['headway_2']
+        #headway = sub_result_dict['headway']  # headway[j,t]
+        #headway_1 = sub_result_dict['headway_1']
+        headway_2 = sub_result_dict['headway_2']
 
         m_y_0=m.getVarByName('y_0')
         m_N_hat=gp.tupledict({(j,t):m.getVarByName('N_hat['+str(j)+','+str(t)+']') for j,t in index_line_period})
+        m_N_tilde = gp.tupledict({(j, t): m.getVarByName('N_tilde[' + str(j) + ',' + str(t) + ']') for j, t in index_line_period})
         m_N_bar=gp.tupledict({j:m.getVarByName('N_bar['+str(j)+']') for j in range(1,3)})
         m_q = gp.tupledict(
             {(j, t): m.getVarByName('q[' + str(j) + ',' + str(t) + ']') for j, t in index_line_period})
@@ -555,12 +566,14 @@ class FOT(object):
                         ) +
                         gp.quicksum(
                             u_1[j, t] * (2 * self._distance[j - 1] / v_hat[j, t] * m_xi[j, t] + 2 * self._distance[
-                                j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t]) - headway[j, t] * m_N_hat[j, t])
+                                j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])
+                            - S[1]/self._peak_point_demand[j-1][t-1]*m_N_tilde[j,t]
+                            -S[2]/self._peak_point_demand[j-1][t-1]*(m_N_hat[j,t]-m_N_tilde[j,t]))
                             for j, t in index_line_period
                         ) +
                         gp.quicksum(
                             u_2[j, t] * (2 * self._distance[j - 1] / v_hat[j, t] * m_xi[j, t] + 2 * self._distance[
-                                j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t]) - headway[j, t] * m_N_hat[j, t])
+                                j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t]) - headway_2[j, t] * m_N_hat[j, t])
                             for j, t in index_line_period
                         ) +
                         u_3 * (self._eta*(S[1] - S[2]) + 1) +
@@ -593,7 +606,9 @@ class FOT(object):
                 )+
                 gp.quicksum(
                     lambda_1[j,t]*(2 * self._distance[j - 1] / v_hat[j, t] * m_xi[j, t]
-                    + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t]) - headway_1[j, t] * m_N_hat[j, t])
+                    + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])
+                    -S[1]/self._peak_point_demand[j-1][t-1]*m_N_tilde[j,t]
+                    -S[2]/self._peak_point_demand[j-1][t-1]*(m_N_hat[j,t]-m_N_tilde[j,t]))
                     for j,t in index_line_period
                 )+
                 gp.quicksum(
@@ -601,40 +616,40 @@ class FOT(object):
                     + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t]) - headway_2[j, t] * m_N_hat[j, t])
                     for j,t in index_line_period
                 )+
-                lambda_3*(S[1]-S[2]+0.5)<=0
+                lambda_3*(self._eta*(S[1]-S[2])+1)<=0
             )
-        add1_constr = [cons for cons in m.getConstrs() if 'add1' in cons.ConstrName]
-        add2_constr = [cons for cons in m.getConstrs() if 'add2' in cons.ConstrName]
-        add3_constr = [cons for cons in m.getConstrs() if 'add3' in cons.ConstrName]
-        if not add1_constr:
-            m.addConstrs((m_N_hat[j, t] == 2 * self._distance[j - 1] / (v_hat[j, t] * headway[j, t]) * m_xi[j, t]
-                          + 2 * self._distance[j - 1] / (self._speed[j - 1][t - 1] * headway[j, t]) * (1 - m_xi[j, t])
-                          for j, t in index_line_period), name='add1')
-        else:
-            m.remove(add1_constr)
-            m.addConstrs((m_N_hat[j, t] == 2 * self._distance[j - 1] / (v_hat[j, t] * headway[j, t]) * m_xi[j, t]
-                          + 2 * self._distance[j - 1] / (self._speed[j - 1][t - 1] * headway[j, t]) * (1 - m_xi[j, t])
-                          for j, t in index_line_period), name='add1')
-        if not add2_constr:
-            m.addConstrs((m_N_bar[1] >= gp.quicksum(
-                    2 * self._distance[j - 1] / (v_hat[j, t] * headway[j, t]) * m_xi[j, t]
-                    + 2 * self._distance[j - 1] / (self._speed[j - 1][t - 1] * headway[j, t]) * (m_delta[j, t] - m_xi[j, t])
-                    for j in range(1, self._routeNo + 1)) for t in range(1, self._period + 1)), name='add2')
-        else:
-            m.remove(add2_constr)
-            m.addConstrs((m_N_bar[1] >= gp.quicksum(
-                    2 * self._distance[j - 1] / (v_hat[j, t] * headway[j, t]) * m_xi[j, t]
-                    + 2 * self._distance[j - 1] / (self._speed[j - 1][t - 1] * headway[j, t]) * (m_delta[j, t] - m_xi[j, t])
-                    for j in range(1, self._routeNo + 1)) for t in range(1, self._period + 1)), name='add2')
-        if not add3_constr:
-            m.addConstrs((m_N_bar[2] >= gp.quicksum(
-                    2 * self._distance[j - 1] / (self._speed[j - 1][t - 1] * headway[j, t]) * (1 - m_delta[j, t])
-                    for j in range(1, self._routeNo + 1)) for t in range(1, self._period + 1)), name='add3')
-        else:
-            m.remove(add3_constr)
-            m.addConstrs((m_N_bar[2] >= gp.quicksum(
-                    2 * self._distance[j - 1] / (self._speed[j - 1][t - 1] * headway[j, t]) * (1 - m_delta[j, t])
-                    for j in range(1, self._routeNo + 1)) for t in range(1, self._period + 1)), name='add3')
+        # add1_constr = [cons for cons in m.getConstrs() if 'add1' in cons.ConstrName]
+        # add2_constr = [cons for cons in m.getConstrs() if 'add2' in cons.ConstrName]
+        # add3_constr = [cons for cons in m.getConstrs() if 'add3' in cons.ConstrName]
+        # if not add1_constr:
+        #     m.addConstrs((m_N_hat[j, t] == 2 * self._distance[j - 1] / (v_hat[j, t] * headway[j, t]) * m_xi[j, t]
+        #                   + 2 * self._distance[j - 1] / (self._speed[j - 1][t - 1] * headway[j, t]) * (1 - m_xi[j, t])
+        #                   for j, t in index_line_period), name='add1')
+        # else:
+        #     m.remove(add1_constr)
+        #     m.addConstrs((m_N_hat[j, t] == 2 * self._distance[j - 1] / (v_hat[j, t] * headway[j, t]) * m_xi[j, t]
+        #                   + 2 * self._distance[j - 1] / (self._speed[j - 1][t - 1] * headway[j, t]) * (1 - m_xi[j, t])
+        #                   for j, t in index_line_period), name='add1')
+        # if not add2_constr:
+        #     m.addConstrs((m_N_bar[1] >= gp.quicksum(
+        #             2 * self._distance[j - 1] / (v_hat[j, t] * headway[j, t]) * m_xi[j, t]
+        #             + 2 * self._distance[j - 1] / (self._speed[j - 1][t - 1] * headway[j, t]) * (m_delta[j, t] - m_xi[j, t])
+        #             for j in range(1, self._routeNo + 1)) for t in range(1, self._period + 1)), name='add2')
+        # else:
+        #     m.remove(add2_constr)
+        #     m.addConstrs((m_N_bar[1] >= gp.quicksum(
+        #             2 * self._distance[j - 1] / (v_hat[j, t] * headway[j, t]) * m_xi[j, t]
+        #             + 2 * self._distance[j - 1] / (self._speed[j - 1][t - 1] * headway[j, t]) * (m_delta[j, t] - m_xi[j, t])
+        #             for j in range(1, self._routeNo + 1)) for t in range(1, self._period + 1)), name='add2')
+        # if not add3_constr:
+        #     m.addConstrs((m_N_bar[2] >= gp.quicksum(
+        #             2 * self._distance[j - 1] / (self._speed[j - 1][t - 1] * headway[j, t]) * (1 - m_delta[j, t])
+        #             for j in range(1, self._routeNo + 1)) for t in range(1, self._period + 1)), name='add3')
+        # else:
+        #     m.remove(add3_constr)
+        #     m.addConstrs((m_N_bar[2] >= gp.quicksum(
+        #             2 * self._distance[j - 1] / (self._speed[j - 1][t - 1] * headway[j, t]) * (1 - m_delta[j, t])
+        #             for j in range(1, self._routeNo + 1)) for t in range(1, self._period + 1)), name='add3')
 
         m.update()
         # N_hat: N_j_t
@@ -653,6 +668,7 @@ class FOT(object):
                 y_dict={}
                 y_dict['y_0']=m.objVal
                 y_dict['N_hat']=dict(m.getAttr('x',m_N_hat))
+                y_dict['N_tilde']=dict(m.getAttr('x',m_N_tilde))
                 y_dict['N_bar']=dict(m.getAttr('x',m_N_bar))
                 y_dict['q']=dict(m.getAttr('x',m_q))
                 y_dict['X']=dict(m.getAttr('x',m_X))
