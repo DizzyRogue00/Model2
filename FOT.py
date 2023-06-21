@@ -174,7 +174,7 @@ class FOT(object):
 
         index_line_period = gp.tuplelist([(line, time) for line in range(1, self._routeNo + 1) for time in range(1, self._period + 1)])
 
-        S=m1.addVars(range(1,3),lb=1,ub=200,name='S')
+        S=m1.addVars(range(1,3),lb=10,ub=100,name='S')
         S_inverse=m1.addVars(range(1,3),name='S_inverse')
         h_2=m1.addVars(index_line_period,name='h_2')
         u_0=m1.addVars(index_line_period,name='u_0')
@@ -336,7 +336,7 @@ class FOT(object):
             m2.setParam('nonconvex', 2)
             m2.Params.timeLimit = 200
 
-            m2_S = m2.addVars(range(1, 3), lb=1,ub=200, name='m2_S')
+            m2_S = m2.addVars(range(1, 3), lb=10,ub=100, name='m2_S')
             m2_h_2 = m2.addVars(index_line_period, name='m2_h_2')
             lambda_0 = m2.addVars(index_line_period, name='lambda_0')
             lambda_1 = m2.addVars(index_line_period, name='lambda_1')
