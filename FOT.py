@@ -302,7 +302,7 @@ class FOT(object):
             logger.info('The objective value of subproblem is %s'%(m1.objVal))
             result_dict['objval']=m1.objVal
             result_dict['S']=dict(m1.getAttr('x',S))
-            result_dict['Headway']=dict(m1.getAttr('x',H))
+            result_dict['headway']=dict(m1.getAttr('x',H))
             result_dict['u_0']=dict(m1.getAttr('x',u_0))
             #result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_2'] = dict(m1.getAttr('x', u_2))
@@ -324,7 +324,7 @@ class FOT(object):
             logger.info('The objective value of subproblem is %s' % (m1.objVal))
             result_dict['objval'] = m1.objVal
             result_dict['S'] = dict(m1.getAttr('x', S))
-            result_dict['Headway'] = dict(m1.getAttr('x', H))
+            result_dict['headway'] = dict(m1.getAttr('x', H))
             result_dict['u_0'] = dict(m1.getAttr('x', u_0))
             # result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_2'] = dict(m1.getAttr('x', u_2))
