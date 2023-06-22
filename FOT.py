@@ -286,7 +286,7 @@ class FOT(object):
             for j,t in index_line_period:
                 sub_0_name='sub_0'+'['+str(j)+','+str(t)+']'
                 temp_sub_0=m1.getConstrByName(sub_0_name)
-                result_dict['u_0'][j,t]=temp_sub_0.Pi
+                result_dict['u_0'][j,t]=temp_sub_0.pi
                 sub_2_name = 'sub_2' + '[' + str(j) + ',' + str(t) + ']'
                 temp_sub_2 = m1.getConstrByName(sub_2_name)
                 result_dict['u_2'][j, t] = temp_sub_2.Pi
@@ -778,6 +778,9 @@ class FOT(object):
         with open(self._path,'wb') as f:
             while epsilon<tol and iter<maxiter:
                 result_s=self.SubProblem(y)
+                print(result_s['S'])
+                print(result_s['headway'])
+                print(result_s['v_hat'])
                 pickle.dump(result_s,f)
                 ob=result_s['objval']
                 UB=min(UB,ob)
@@ -788,10 +791,6 @@ class FOT(object):
                 # print(result_s['u_1'])
                 # print(result_s['u_2'])
                 # print(result_s['u_3'])
-                print(result_s['S'])
-                print(result_s['headway'])
-                print(result_s['v_hat_1'])
-                print(result_s['v_hat_2'])
                 # print(y['N_hat'])
                 # print(y['N_bar'])
                 # print(y['q'])
