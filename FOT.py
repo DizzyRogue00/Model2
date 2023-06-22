@@ -178,6 +178,10 @@ class FOT(object):
         S_inverse=m1.addVars(range(1,3),name='S_inverse')
         #h_2=m1.addVars(index_line_period,name='h_2')
         H=m1.addVars(index_line_period,name='headway')
+        u_0 = m1.addVars(index_line_period, name='u_0')
+        u_2 = m1.addVars(index_line_period,lb=-GRB.INFINITY, name='u_2')
+        u_3 = m1.addVar(name='u_3')
+        u_4 = m1.addVar(name='u_4')
         #u_0=m1.addVars(index_line_period,name='u_0')
         #u_1=m1.addVars(index_line_period,name='u_1')
         #u_2=m1.addVars(index_line_period,name='u_2')
@@ -227,6 +231,14 @@ class FOT(object):
                        for j, t in index_line_period), name='sub_2')
         m1.addConstr(self._eta * (S[1] - S[2]) + 1 <= 0, name='sub_3')
         m1.addConstr(self._eta*(S[2]-S[1])-6<=0,name='sub_4')
+        m1.addConstr(
+            gp.quicksum(
+                u_0[j,t]*(y['q'][j,t]*H[j,t]-self._eta*(S[2]-S[1]))
+                for j,t in index_line_period
+            )
+            +u_3*(self._eta*(S[1]-S[2])+1)
+            +u_4*(self._eta*(S[2]-S[1])-6)>=1e-3
+        )
         #2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._gammar/self._speed[j-1][t-1]*S_inverse[1]+2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._beta/self._speed[j-1][t-1]+2*self._gammar*self._t_u*y['q'][j,t]+2*self._beta*self._t_u*y['q'][j,t]*S[1]
         #self._v_w*self._demand[j-1][t-1]/self._peak_point_demand[j-1][t-1]*S[1]
         #2*self._v_v*self._demand[j-1][t-1]*self._average_distance[j-1]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
@@ -267,6 +279,16 @@ class FOT(object):
         )
         obj=obj+gp.quicksum((self._c+self._e*S[s])*self._recovery/365*y['N_bar'][s] for s in range(1,3))
         obj=obj+(gp.quicksum(self._d_j)-gp.quicksum(y['q'][j,t] for j,t in index_line_period))*self._v_p
+        obj=obj+gp.quicksum(
+            u_0[j,t]*(y['q'][j,t]*H[j,t]-self._eta*(S[2]-S[1]))
+            +u_2[j,t]*(
+                y['N_hat'][j,t]*H[j,t]
+                -2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
+                -2*self._distance[j-1]/self._speed[j-1][t-1]*(1-y['X'][j,t]*y['delta'][j,t])
+            )
+
+            for j,t in index_line_period
+        )+u_3*(self._eta*(S[1]-S[2])+1)+u_4*(self._eta*(S[2]-S[1])-6)
 
         m1.setObjective(obj,gp.GRB.MINIMIZE)
         m1.update()
@@ -281,21 +303,11 @@ class FOT(object):
             result_dict['objval']=m1.objVal
             result_dict['S']=dict(m1.getAttr('x',S))
             result_dict['headway']=dict(m1.getAttr('x',H))
-            result_dict['u_0']={}
-            result_dict['u_2']={}
-            for j,t in index_line_period:
-                sub_0_name='sub_0'+'['+str(j)+','+str(t)+']'
-                temp_sub_0=m1.getConstrByName(sub_0_name)
-                result_dict['u_0'][j,t]=temp_sub_0.pi
-                sub_2_name = 'sub_2' + '[' + str(j) + ',' + str(t) + ']'
-                temp_sub_2 = m1.getConstrByName(sub_2_name)
-                result_dict['u_2'][j, t] = temp_sub_2.Pi
-            result_dict['u_3']=m1.getConstrByName('sub_3').Pi
-            result_dict['u_4'] = m1.getConstrByName('sub_4').Pi
-            #result_dict['u_0']=dict(m1.getAttr('x',u_0))
+            result_dict['u_0']=dict(m1.getAttr('x',u_0))
             #result_dict['u_1'] = dict(m1.getAttr('x', u_1))
-            #result_dict['u_2'] = dict(m1.getAttr('x', u_2))
-            #result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
+            result_dict['u_2'] = dict(m1.getAttr('x', u_2))
+            result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
+            result_dict['u_4'] = m1.getAttr('x', [u_4])[0]
             #logger.info(result_dict['u_3'])
             result_dict['v_hat']={(j,t):self._speed[j-1][t-1] * self._distance[j-1] * self._peak_point_demand[j-1][t-1] / (
                         self._alpha * self._distance[j-1] * self._peak_point_demand[j-1][t-1] + self._t_u * y['q'][j, t] *
@@ -308,24 +320,22 @@ class FOT(object):
             # result_dict['headway_1'] = h1_hat
             # result_dict['headway_2'] = h2_hat
             result_dict['status']=1
-        # elif m1.status == GRB.TIME_LIMIT:
-        #     logger.info('The objective value of subproblem is %s' % (m1.objVal))
-        #     result_dict['objval'] = m1.objVal
-        #     result_dict['S'] = dict(m1.getAttr('x', S))
-        #     result_dict['headway'] = dict(m1.getAttr('x', H))
-        #     result_dict['u_0'] = dict(m1.getAttr('x', u_0))
-        #     # result_dict['u_1'] = dict(m1.getAttr('x', u_1))
-        #     result_dict['u_2'] = dict(m1.getAttr('x', u_2))
-        #     result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
-        #     # logger.info(result_dict['u_3'])
-        #     result_dict['v_hat_1'] = {
-        #         (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] / (
-        #                 self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
-        #                 y['q'][j, t] *
-        #                 self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
-        #     result_dict['v_hat_2'] = {(j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] / (
-        #                 self._alpha * self._distance[j - 1] + self._t_u * y['q'][j, t] * result_dict['headway'][j, t])
-        #                               for j, t in index_line_period}
+        elif m1.status == GRB.TIME_LIMIT:
+            logger.info('The objective value of subproblem (time limit) is %s' % (m1.objVal))
+            result_dict['objval'] = m1.objVal
+            result_dict['S'] = dict(m1.getAttr('x', S))
+            result_dict['headway'] = dict(m1.getAttr('x', H))
+            result_dict['u_0'] = dict(m1.getAttr('x', u_0))
+            # result_dict['u_1'] = dict(m1.getAttr('x', u_1))
+            result_dict['u_2'] = dict(m1.getAttr('x', u_2))
+            result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
+            result_dict['u_4'] = m1.getAttr('x', [u_4])[0]
+            # logger.info(result_dict['u_3'])
+            result_dict['v_hat'] = {
+                (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] / (
+                        self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
+                        y['q'][j, t] *
+                        self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
             '''
             result_dict['objval'] = m1.objVal
             result_dict['S'] = dict(m1.getAttr('x', S))
@@ -365,7 +375,7 @@ class FOT(object):
             result_dict['headway_1']=h1_hat
             result_dict['headway_2']=h2_hat
             '''
-            #result_dict['status']=1
+            result_dict['status']=1
         else:
             m2=gp.Model('infeasibleSubProblem')
             m2.setParam('nonconvex', 2)
