@@ -174,10 +174,10 @@ class FOT(object):
 
         index_line_period = gp.tuplelist([(line, time) for line in range(1, self._routeNo + 1) for time in range(1, self._period + 1)])
 
-        S=m1.addVars(range(1,3),lb=1,ub=100,name='S')
+        S=m1.addVars(range(1,3),lb=1,ub=500,name='S')
         S_inverse=m1.addVars(range(1,3),name='S_inverse')
         #h_2=m1.addVars(index_line_period,name='h_2')
-        H=m1.addVars(index_line_period,ub=0.9,name='headway')
+        H=m1.addVars(index_line_period,lb=0.05,ub=0.9,name='headway')
         u_0 = m1.addVars(index_line_period, name='u_0')
         u_2 = m1.addVars(index_line_period, name='u_2')
         #u_3 = m1.addVar(name='u_3')
@@ -420,9 +420,9 @@ class FOT(object):
             m2.setParam('nonconvex', 2)
             m2.Params.timeLimit = 200
 
-            m2_S = m2.addVars(range(1, 3), lb=1,ub=100, name='m2_S')
+            m2_S = m2.addVars(range(1, 3), lb=1,ub=500, name='m2_S')
             #m2_obj=m2.addVar(lb=10,name='m2_obj')
-            m2_H=m2.addVars(index_line_period,ub=0.9,name='m2_H')
+            m2_H=m2.addVars(index_line_period,lb=0.05,ub=0.9,name='m2_H')
             #m2_h_2 = m2.addVars(index_line_period, name='m2_h_2')
             lambda_0 = m2.addVars(index_line_period, name='lambda_0')
             #lambda_1 = m2.addVars(index_line_period, name='lambda_1')
@@ -466,21 +466,21 @@ class FOT(object):
             )
             #m2_obj = m2_obj + lambda_3 * (self._eta * (m2_S[1] - m2_S[2]) + 1)
             #m2_obj=m2_obj+lambda_4*(self._eta*(m2_S[2]-m2_S[1])-6)
-            # m2.addConstr(
-            #     gp.quicksum(
-            #         lambda_0[j, t] * (y['q'][j, t] * m2_H[j,t] - self._eta * (m2_S[2] - m2_S[1]))
-            #         for j, t in index_line_period
-            # )+
-            #     gp.quicksum(
-            #         lambda_2[j, t] * (
-            #                 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][j, t]
-            #                 + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /self._peak_point_demand[j - 1][t - 1] * m2_S[1]
-            #                 + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-            #                 - y['N_hat'][j, t] * H[j, t]
-            #                  )
-            #                  for j, t in index_line_period
-            #              )
-            #              >= 10)
+            m2.addConstr(
+                gp.quicksum(
+                    lambda_0[j, t] * (y['q'][j, t] * m2_H[j,t] - self._eta * (m2_S[2] - m2_S[1]))
+                    for j, t in index_line_period
+            )+
+                gp.quicksum(
+                    lambda_2[j, t] * (
+                            2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][j, t]
+                            + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /self._peak_point_demand[j - 1][t - 1] * m2_S[1]
+                            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+                            - y['N_hat'][j, t] * m2_H[j, t]
+                             )
+                             for j, t in index_line_period
+                         )
+                         >= 1e-4)
             '''
             m2.addConstrs(((self._v_w * self._demand[j - 1][t - 1] + 2 * self._alpha * self._v_v * self._t_u * y['q'][
                 j, t] * self._speed[j - 1][t - 1] * self._demand[j - 1][t - 1] * self._peak_point_demand[j - 1][t - 1] *
@@ -645,7 +645,7 @@ class FOT(object):
         m.addConstrs((N_bar[s]>=0 for s in range(1,3)),name='c_23')#> -> >=
 
         m.setObjective(y_0,sense=GRB.MINIMIZE)
-        m.Params.lazyConstraints=1
+        #m.Params.lazyConstraints=1
         m.update()
         return m
 
@@ -811,6 +811,7 @@ class FOT(object):
         #             for j in range(1, self._routeNo + 1)) for t in range(1, self._period + 1)), name='add3')
 
         m.update()
+        m.write('out1.lp')
         # N_hat: N_j_t
         # N_bar: N_s
         # q: q_j_t
