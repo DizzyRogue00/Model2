@@ -230,7 +230,7 @@ class FOT(object):
         #                + 2 * self._distance[j - 1] * y['X'][j, t] * y['delta'][j, t] * (self._alpha * self._distance[j - 1]*self._peak_point_demand[j-1][t-1] + self._t_u * y['q'][j, t] * self._speed[j-1][t-1]*S[1]) / (self._speed[j - 1][t - 1] * self._distance[j - 1]*self._peak_point_demand[j-1][t-1])
         #                + 2 * self._distance[j - 1] * (1 - y['X'][j, t] * y['delta'][j, t]) / self._speed[j - 1][t - 1] <= 0
         #                for j, t in index_line_period), name='sub_2')
-        m1.addConstrs((2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*y['X'][j,t]*y['delta'][j,t]+2*self._t_u*y['X'][j,t]*y['delta']*y['q'][j,t]/self._peak_point_demand[j-1][t-1]*S[1]+2*self._distance[j-1]/self._speed[j-1][t-1]*(1-y['X'][j,t]*y['delta'][j,t])-y['N_hat'][j,t]*S[1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]-y['N_hat'][j,t]*S[2]*(1-y['delta'][j,t])/self._peak_point_demand[j-1][t-1]<=0 for j,t in index_line_period),name='sub_2')
+        m1.addConstrs((2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*y['X'][j,t]*y['delta'][j,t]+2*self._t_u*y['X'][j,t]*y['delta'][j,t]*y['q'][j,t]/self._peak_point_demand[j-1][t-1]*S[1]+2*self._distance[j-1]/self._speed[j-1][t-1]*(1-y['X'][j,t]*y['delta'][j,t])-y['N_hat'][j,t]*S[1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]-y['N_hat'][j,t]*S[2]*(1-y['delta'][j,t])/self._peak_point_demand[j-1][t-1]<=0 for j,t in index_line_period),name='sub_2')
         m1.addConstr(self._eta * (S[1] - S[2]) + 1 <= 0, name='sub_3')
         m1.addConstr(self._eta*(S[2]-S[1])-6<=0,name='sub_4')
         # m1.addConstr(
@@ -251,7 +251,7 @@ class FOT(object):
                 u_0[j, t] * (y['q'][j,t]*S[1]-self._eta*(S[2]-S[1])*self._peak_point_demand[j-1][t-1])
                 + u_2[j, t] * (
                         2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][j, t]
-                        + 2 * self._t_u * y['X'][j, t] * y['delta'] * y['q'][j, t] / self._peak_point_demand[j - 1][t - 1] * S[1]
+                        + 2 * self._t_u * y['X'][j, t] * y['delta'][j,t] * y['q'][j, t] / self._peak_point_demand[j - 1][t - 1] * S[1]
                         + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
                         - y['N_hat'][j, t] * S[1] * y['delta'][j, t] /self._peak_point_demand[j - 1][t - 1]
                         - y['N_hat'][j, t] * S[2] * (1 - y['delta'][j, t]) /self._peak_point_demand[j - 1][t - 1]
@@ -315,7 +315,7 @@ class FOT(object):
             u_0[j, t] * (y['q'][j,t]*S[1]-self._eta*(S[2]-S[1])*self._peak_point_demand[j-1][t-1])
             + u_2[j, t] * (
                     2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][j, t]
-                    + 2 * self._t_u * y['X'][j, t] * y['delta'] * y['q'][j, t] / self._peak_point_demand[j - 1][t - 1] * S[1]
+                    + 2 * self._t_u * y['X'][j, t] * y['delta'][j,t] * y['q'][j, t] / self._peak_point_demand[j - 1][t - 1] * S[1]
                     + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
                     - y['N_hat'][j, t] * S[1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1]
                     - y['N_hat'][j, t] * S[2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
@@ -420,6 +420,7 @@ class FOT(object):
             m2.Params.timeLimit = 200
 
             m2_S = m2.addVars(range(1, 3), lb=1,ub=100, name='m2_S')
+            #m2_obj=m2.addVar(lb=10,name='m2_obj')
             #m2_H=m2.addVars(index_line_period,ub=0.9,name='m2_H')
             #m2_h_2 = m2.addVars(index_line_period, name='m2_h_2')
             lambda_0 = m2.addVars(index_line_period, name='lambda_0')
@@ -456,16 +457,16 @@ class FOT(object):
             m2_obj = m2_obj + gp.quicksum(
                 lambda_2[j, t] * (
                         2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][j, t]
-                        + 2 * self._t_u * y['X'][j, t] * y['delta'] * y['q'][j, t] / self._peak_point_demand[j - 1][t - 1] * S[1]
+                        + 2 * self._t_u * y['X'][j, t] * y['delta'][j,t] * y['q'][j, t] / self._peak_point_demand[j - 1][t - 1] * m2_S[1]
                         + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                        - y['N_hat'][j, t] * S[1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1]
-                        - y['N_hat'][j, t] * S[2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
+                        - y['N_hat'][j, t] * m2_S[1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1]
+                        - y['N_hat'][j, t] * m2_S[2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
                 )
                 for j, t in index_line_period
             )
             #m2_obj = m2_obj + lambda_3 * (self._eta * (m2_S[1] - m2_S[2]) + 1)
             #m2_obj=m2_obj+lambda_4*(self._eta*(m2_S[2]-m2_S[1])-6)
-            m2.addConstr(m2_obj >= 10)
+            m2.addConstr(m2_obj>= 10)
             '''
             m2.addConstrs(((self._v_w * self._demand[j - 1][t - 1] + 2 * self._alpha * self._v_v * self._t_u * y['q'][
                 j, t] * self._speed[j - 1][t - 1] * self._demand[j - 1][t - 1] * self._peak_point_demand[j - 1][t - 1] *
@@ -875,7 +876,7 @@ class FOT(object):
                 print(result_s['S'])
                 print(result_s['headway'])
                 print(result_s['v_hat'])
-                print(result_s['u_2'])
+                #print(result_s['u_2'])
                 print(y['N_hat'])
                 print(y['N_bar'])
                 print(y['X'])
