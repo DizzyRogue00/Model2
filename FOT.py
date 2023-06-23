@@ -466,21 +466,21 @@ class FOT(object):
             )
             #m2_obj = m2_obj + lambda_3 * (self._eta * (m2_S[1] - m2_S[2]) + 1)
             #m2_obj=m2_obj+lambda_4*(self._eta*(m2_S[2]-m2_S[1])-6)
-            m2.addConstr(
-                gp.quicksum(
-                    lambda_0[j, t] * (y['q'][j, t] * m2_H[j,t] - self._eta * (m2_S[2] - m2_S[1]))
-                    for j, t in index_line_period
-            )+
-                gp.quicksum(
-                    lambda_2[j, t] * (
-                            2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][j, t]
-                            + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /self._peak_point_demand[j - 1][t - 1] * m2_S[1]
-                            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                            - y['N_hat'][j, t] * H[j, t]
-                             )
-                             for j, t in index_line_period
-                         )
-                         >= 10)
+            # m2.addConstr(
+            #     gp.quicksum(
+            #         lambda_0[j, t] * (y['q'][j, t] * m2_H[j,t] - self._eta * (m2_S[2] - m2_S[1]))
+            #         for j, t in index_line_period
+            # )+
+            #     gp.quicksum(
+            #         lambda_2[j, t] * (
+            #                 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][j, t]
+            #                 + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /self._peak_point_demand[j - 1][t - 1] * m2_S[1]
+            #                 + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+            #                 - y['N_hat'][j, t] * H[j, t]
+            #                  )
+            #                  for j, t in index_line_period
+            #              )
+            #              >= 10)
             '''
             m2.addConstrs(((self._v_w * self._demand[j - 1][t - 1] + 2 * self._alpha * self._v_v * self._t_u * y['q'][
                 j, t] * self._speed[j - 1][t - 1] * self._demand[j - 1][t - 1] * self._peak_point_demand[j - 1][t - 1] *
