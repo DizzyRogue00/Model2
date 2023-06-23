@@ -180,8 +180,8 @@ class FOT(object):
         #H=m1.addVars(index_line_period,ub=0.9,name='headway')
         u_0 = m1.addVars(index_line_period, name='u_0')
         u_2 = m1.addVars(index_line_period, name='u_2')
-        u_3 = m1.addVar(name='u_3')
-        u_4 = m1.addVar(name='u_4')
+        #u_3 = m1.addVar(name='u_3')
+        #u_4 = m1.addVar(name='u_4')
         #u_0=m1.addVars(index_line_period,name='u_0')
         #u_1=m1.addVars(index_line_period,name='u_1')
         #u_2=m1.addVars(index_line_period,name='u_2')
@@ -257,9 +257,7 @@ class FOT(object):
                         - y['N_hat'][j, t] * S[2] * (1 - y['delta'][j, t]) /self._peak_point_demand[j - 1][t - 1]
                 )
                 for j, t in index_line_period
-            )
-            + u_3 * (self._eta * (S[1] - S[2]) + 1)
-            + u_4 * (self._eta * (S[2] - S[1]) - 6) >= -1e-3
+            ) >= -1e-3
         )
         #2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._gammar/self._speed[j-1][t-1]*S_inverse[1]+2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._beta/self._speed[j-1][t-1]+2*self._gammar*self._t_u*y['q'][j,t]+2*self._beta*self._t_u*y['q'][j,t]*S[1]
         #self._v_w*self._demand[j-1][t-1]/self._peak_point_demand[j-1][t-1]*S[1]
@@ -321,7 +319,7 @@ class FOT(object):
                     - y['N_hat'][j, t] * S[2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
             )
             for j, t in index_line_period
-        ) + u_3 * (self._eta * (S[1] - S[2]) + 1) + u_4 * (self._eta * (S[2] - S[1]) - 6)
+        )
 
         m1.setObjective(obj,gp.GRB.MINIMIZE)
         m1.update()
@@ -340,8 +338,8 @@ class FOT(object):
             result_dict['u_0']=dict(m1.getAttr('x',u_0))
             #result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_2'] = dict(m1.getAttr('x', u_2))
-            result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
-            result_dict['u_4'] = m1.getAttr('x', [u_4])[0]
+            #result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
+            #result_dict['u_4'] = m1.getAttr('x', [u_4])[0]
             #logger.info(result_dict['u_3'])
             result_dict['v_hat']={(j,t):self._speed[j-1][t-1] * self._distance[j-1] * self._peak_point_demand[j-1][t-1] / (
                         self._alpha * self._distance[j-1] * self._peak_point_demand[j-1][t-1] + self._t_u * y['q'][j, t] *
@@ -366,8 +364,8 @@ class FOT(object):
             result_dict['u_0'] = dict(m1.getAttr('x', u_0))
             # result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_2'] = dict(m1.getAttr('x', u_2))
-            result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
-            result_dict['u_4'] = m1.getAttr('x', [u_4])[0]
+            #result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
+            #result_dict['u_4'] = m1.getAttr('x', [u_4])[0]
             # logger.info(result_dict['u_3'])
             result_dict['v_hat'] = {
                 (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] / (
@@ -645,8 +643,8 @@ class FOT(object):
             u_0=sub_result_dict['u_0']#u_0[j,t]
             #u_1 = sub_result_dict['u_1']  # u_1[j,t]
             u_2 = sub_result_dict['u_2']  # u_2[j,t]
-            u_3 = sub_result_dict['u_3']
-            u_4 = sub_result_dict['u_4']# u_3
+            #u_3 = sub_result_dict['u_3']
+            #u_4 = sub_result_dict['u_4']# u_3
         else:
             lambda_0=sub_result_dict['lambda_0']#lambda_0[j,t]
             #lambda_1=sub_result_dict['lambda_1']#lambda_1[j,t]
@@ -724,8 +722,8 @@ class FOT(object):
                                          )
                             for j, t in index_line_period
                         ) +
-                        u_3 * (self._eta*(S[1] - S[2]) + 1) +
-                        u_4*(self._eta*(S[2]-S[1])-6)+
+                        #u_3 * (self._eta*(S[1] - S[2]) + 1) +
+                        #u_4*(self._eta*(S[2]-S[1])-6)+
                         (gp.quicksum(self._d_j) - gp.quicksum(m_q[j, t] for j, t in index_line_period)) * self._v_p
                         )
         else:
