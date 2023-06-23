@@ -460,7 +460,7 @@ class FOT(object):
                         2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][j, t]
                         + 2 * self._t_u * y['X'][j, t] * y['delta'][j,t] * y['q'][j, t] / self._peak_point_demand[j - 1][t - 1] * m2_S[1]
                         + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                        - y['N_hat'][j, t] * H[j,t]
+                        - y['N_hat'][j, t] * m2_H[j,t]
                 )
                 for j, t in index_line_period
             )
