@@ -176,7 +176,7 @@ class FOT(object):
 
         S=m1.addVars(range(1,3),lb=1,ub=100,name='S')
         S_inverse=m1.addVars(range(1,3),name='S_inverse')
-        h_2=m1.addVars(index_line_period,name='h_2')
+        h_2=m1.addVars(index_line_period,lb=0.05,name='h_2')
         #H=m1.addVars(index_line_period,lb=0.05,ub=0.9,name='headway')
         u_0 = m1.addVars(index_line_period, name='u_0')
         u_1 = m1.addVars(index_line_period, name='u_1')
@@ -470,7 +470,7 @@ class FOT(object):
             m2_S = m2.addVars(range(1, 3), lb=1,ub=100, name='m2_S')
             #m2_obj=m2.addVar(lb=10,name='m2_obj')
             #m2_H=m2.addVars(index_line_period,lb=0.05,ub=0.9,name='m2_H')
-            m2_h_2 = m2.addVars(index_line_period, name='m2_h_2')
+            m2_h_2 = m2.addVars(index_line_period,lb=0.05, name='m2_h_2')
             lambda_0 = m2.addVars(index_line_period, name='lambda_0')
             #lambda_1 = m2.addVars(index_line_period, name='lambda_1')
             lambda_1 = m2.addVars(index_line_period, name='lambda_1')
