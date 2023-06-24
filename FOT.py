@@ -325,7 +325,7 @@ class FOT(object):
                     +N_hat.prod(y['delta'],'*',t)
                 )
                 +u_7[t]*(
-                    -y['N_har'][2]
+                    -y['N_bar'][2]
                     +N_hat.sum('*',t)
                     -N_hat.prod(y['delta'],'*',t)
                 )
@@ -413,7 +413,7 @@ class FOT(object):
                     + N_hat.prod(y['delta'], '*', t)
             )
             + u_7[t] * (
-                    -y['N_har'][2]
+                    -y['N_bar'][2]
                     + N_hat.sum('*', t)
                     - N_hat.prod(y['delta'], '*', t)
             )
@@ -433,7 +433,7 @@ class FOT(object):
             result_dict['objval']=m1.objVal
             result_dict['S']=dict(m1.getAttr('x',S))
             result_dict['h_2']=dict(m1.getAttr('x',h_2))
-            result_dict['N_hat']=dict(m1.getAttr('x'.N_hat))
+            result_dict['N_hat']=dict(m1.getAttr('x',N_hat))
             #result_dict['headway']={(j,t):result_dict['S'][1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]+result_dict['S'][2]*(1-y['delta'][j,t])/self._peak_point_demand[j-1][t-1] for j,t in index_line_period}
             result_dict['u_0']=dict(m1.getAttr('x',u_0))
             #result_dict['u_1'] = dict(m1.getAttr('x', u_1))
@@ -571,8 +571,8 @@ class FOT(object):
                           )
             m2.addConstrs(
                 (   m2_aux_N_1[j,t]==
-                    m2_N_hat[j, t] * S[1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1]
-                    + m2_N_hat[j, t] * S[2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
+                    m2_N_hat[j, t] * m2_S[1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1]
+                    + m2_N_hat[j, t] * m2_S[2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
                     for j,t in index_line_period
                 ),name='c_m2_aux_N_1'
             )
@@ -1207,6 +1207,11 @@ class FOT(object):
                 print(result_s['S'])
                 print(result_s['headway'])
                 print(result_s['N_hat'])
+                print(result_s['u_1'])
+                print(result_s['u_2'])
+                print(result_s['u_5'])
+                print(result_s['u_6'])
+                print(result_s['u_7'])
                 print(result_s['h_1'])
                 print(result_s['h_2'])
                 print(result_s['v_hat'])
