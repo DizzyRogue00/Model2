@@ -174,7 +174,7 @@ class FOT(object):
 
         index_line_period = gp.tuplelist([(line, time) for line in range(1, self._routeNo + 1) for time in range(1, self._period + 1)])
 
-        S=m1.addVars(range(1,3),lb=1,ub=500,name='S')
+        S=m1.addVars(range(1,3),lb=20,ub=100,name='S')
         S_inverse=m1.addVars(range(1,3),name='S_inverse')
         h_2=m1.addVars(index_line_period,name='h_2')
         #H=m1.addVars(index_line_period,lb=0.05,ub=0.9,name='headway')
@@ -388,7 +388,7 @@ class FOT(object):
                         self._alpha * self._distance[j-1] * self._peak_point_demand[j-1][t-1] + self._t_u * y['q'][j, t] *
                         self._speed[j-1][t-1] * result_dict['S'][1]) for j,t in index_line_period}
             result_dict['h_1']={(j,t):result_dict['S'][1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]+result_dict['S'][2]*(1-y['delta'][j,t])/self._peak_point_demand[j-1][t-1] for j,t in index_line_period}
-            result_dict['headway']={key:np.min(result_dict['h_1'],result_dict['h_2']) for key in index_line_period}
+            result_dict['headway']={key:np.min((result_dict['h_1'][key],result_dict['h_2'][key])) for key in index_line_period}
             # h2_hat={(j,t):np.sqrt(1/((self._v_w*self._demand[j-1][t-1]+2*self._alpha*self._v_v*self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*self._demand[j-1][t-1]*self._peak_point_demand[j-1][t-1]*self._average_distance[j-1]*y['X'][j,t]*y['delta'][j,t]/(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._speed[j-1][t-1]))*self._speed[j-1][t-1]/(2*self._distance[j-1]*(self._gammar*(1-(1-self._alpha)*y['X'][j,t]*y['delta'][j,t])+self._beta*y['delta'][j,t]*result_dict['S'][1]*(1-(1-self._alpha)*y['X'][j,t])+self._beta*(1-y['delta'][j,t])*result_dict['S'][2]))))
             #     for j,t in index_line_period
             #         }
@@ -421,7 +421,7 @@ class FOT(object):
                 (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
                         result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for j, t in
                 index_line_period}
-            result_dict['headway'] = {key: np.min(result_dict['h_1'], result_dict['h_2']) for key in index_line_period}
+            result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in index_line_period}
             '''
             result_dict['objval'] = m1.objVal
             result_dict['S'] = dict(m1.getAttr('x', S))
@@ -467,7 +467,7 @@ class FOT(object):
             m2.setParam('nonconvex', 2)
             m2.Params.timeLimit = 200
 
-            m2_S = m2.addVars(range(1, 3), lb=1,ub=500, name='m2_S')
+            m2_S = m2.addVars(range(1, 3), lb=20,ub=100, name='m2_S')
             #m2_obj=m2.addVar(lb=10,name='m2_obj')
             #m2_H=m2.addVars(index_line_period,lb=0.05,ub=0.9,name='m2_H')
             m2_h_2 = m2.addVars(index_line_period, name='m2_h_2')
@@ -618,6 +618,8 @@ class FOT(object):
             result_dict['objval'] = float('inf')
             result_dict['S'] = dict(m2.getAttr('x', m2_S))
             result_dict['h_2']=dict(m2.getAttr('x',m2_h_2))
+            #print(result_dict['h_2'])
+
             # result_dict['headway'] = {
             #     (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
             #             result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
@@ -644,7 +646,8 @@ class FOT(object):
                 (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
                         result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for j, t in
                 index_line_period}
-            result_dict['headway'] = {key: np.min(result_dict['h_1'], result_dict['h_2']) for key in index_line_period}
+            #print(result_dict['S'])
+            result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in index_line_period}
             '''
             result_dict['v_hat'] = {
                 (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] / (
@@ -1000,8 +1003,8 @@ class FOT(object):
                 result_s=self.SubProblem(y)
                 logger.info("S is \n %s"%(result_s['S']))
                 logger.info('headway is \n %s'%(result_s['headway']))
-                logger.info('headway is \n %s' % (result_s['h_1']))
-                logger.info('headway is \n %s' % (result_s['h_2']))
+                logger.info('headway_1 is \n %s' % (result_s['h_1']))
+                logger.info('headway_2 is \n %s' % (result_s['h_2']))
                 logger.info('v_hat is \n %s'%(result_s['v_hat']))
 
                 pickle.dump(result_s,f)

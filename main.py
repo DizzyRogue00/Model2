@@ -86,10 +86,11 @@ def Freight_Systemwide(routeNo,distance,average_distance,speed,demand,peak_point
         period=len(demand[0])
         y_initial={}
         y_initial['N_hat']=result_init['n_jt']
-        y_initial['N_bar']={1:result_init['fleet_size'],2:0}
+        #y_initial['N_hat'] = {(j,t):10 for j in range(1,routeNo+1) for t in range(1,period+1)}
+        y_initial['N_bar']={1:0,2:result_init['fleet_size']}
         y_initial['q']={(j,t):0 for j in range(1,routeNo+1) for t in range(1,period+1)}
         y_initial['X']={(j,t):0 for j in range(1,routeNo+1) for t in range(1,period+1)}
-        y_initial['delta']={(j,t):1 for j in range(1,routeNo+1) for t in range(1,period+1)}
+        y_initial['delta']={(j,t):0 for j in range(1,routeNo+1) for t in range(1,period+1)}
         y_initial['xi']={(j,t):0 for j in range(1,routeNo+1) for t in range(1,period+1)}
         y_initial['zeta']={(j,t):0 for j in range(1,routeNo+1) for t in range(1,period+1)}
         print(y_initial['N_hat'])
