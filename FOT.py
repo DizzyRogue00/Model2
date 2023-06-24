@@ -181,6 +181,7 @@ class FOT(object):
         u_0 = m1.addVars(index_line_period, name='u_0')
         u_1 = m1.addVars(index_line_period, name='u_1')
         u_2=m1.addVars(index_line_period,name='u_2')
+        u_5=m1.addVars(index_line_period,name='u_5')
         #u_3 = m1.addVar(name='u_3')
         #u_4 = m1.addVar(name='u_4')
         #u_0=m1.addVars(index_line_period,name='u_0')
@@ -259,6 +260,10 @@ class FOT(object):
             for j, t in index_line_period), name='sub_2')
         m1.addConstr(self._eta * (S[1] - S[2]) + 1 <= 0, name='sub_3')
         m1.addConstr(self._eta*(S[2]-S[1])-6<=0,name='sub_4')
+        m1.addConstrs((
+                -S[1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]
+                -S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])+0.05<=0
+                for j,t in index_line_period),name='sub_5')
         # m1.addConstr(
         #     gp.quicksum(
         #         u_0[j,t]*(y['q'][j,t]*H[j,t]-self._eta*(S[2]-S[1]))
@@ -287,6 +292,11 @@ class FOT(object):
                         + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /self._peak_point_demand[j - 1][t - 1] * S[1]
                         + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
                         - y['N_hat'][j, t] * h_2[j,t]
+                )
+                +u_5[j,t]*(
+                    -S[1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
+                    -S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
+                    +0.05
                 )
                 for j, t in index_line_period
             ) >= -1e-3
@@ -360,6 +370,11 @@ class FOT(object):
                     + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
                     - y['N_hat'][j, t] * h_2[j, t]
             )
+            + u_5[j, t] * (
+                    -S[1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
+                    - S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
+                    + 0.05
+            )
             for j, t in index_line_period
         )
 
@@ -381,6 +396,7 @@ class FOT(object):
             #result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_2']=dict(m1.getAttr('x',u_2))
+            result_dict['u_5'] = dict(m1.getAttr('x', u_5))
             #result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
             #result_dict['u_4'] = m1.getAttr('x', [u_4])[0]
             #logger.info(result_dict['u_3'])
@@ -409,6 +425,7 @@ class FOT(object):
             # result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_2']=dict(m1.getAttr('x',u_2))
+            result_dict['u_5'] = dict(m1.getAttr('x', u_5))
             #result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
             #result_dict['u_4'] = m1.getAttr('x', [u_4])[0]
             # logger.info(result_dict['u_3'])
@@ -475,6 +492,7 @@ class FOT(object):
             #lambda_1 = m2.addVars(index_line_period, name='lambda_1')
             lambda_1 = m2.addVars(index_line_period, name='lambda_1')
             lambda_2=m2.addVars(index_line_period,name='lambda_2')
+            lambda_5=m2.addVars(index_line_period,name='lambda_5')
             #lambda_3 = m2.addVar(name='lambda_3')
             #lambda_4 = m2.addVar(name='lambda_4')
 
@@ -536,6 +554,14 @@ class FOT(object):
                 )
                 for j, t in index_line_period
             )
+            m2_obj=m2_obj+gp.quicksum(
+                lambda_5[j,t]*(
+                    -m2_S[1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
+                    -m2_S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
+                    +0.05
+                )
+                for j,t in index_line_period
+            )
             #m2_obj = m2_obj + lambda_3 * (self._eta * (m2_S[1] - m2_S[2]) + 1)
             #m2_obj=m2_obj+lambda_4*(self._eta*(m2_S[2]-m2_S[1])-6)
             m2.addConstr(
@@ -571,7 +597,16 @@ class FOT(object):
                             - y['N_hat'][j, t] * m2_h_2[j, t]
                     )
                     for j, t in index_line_period
-                )>= 1e-4)
+                )+
+                gp.quicksum(
+                    lambda_5[j, t] * (
+                            -m2_S[1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
+                            - m2_S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
+                            + 0.05
+                )
+                for j, t in index_line_period
+            )
+            >= 1e-4)
             '''
             m2.addConstrs(((self._v_w * self._demand[j - 1][t - 1] + 2 * self._alpha * self._v_v * self._t_u * y['q'][
                 j, t] * self._speed[j - 1][t - 1] * self._demand[j - 1][t - 1] * self._peak_point_demand[j - 1][t - 1] *
@@ -628,6 +663,7 @@ class FOT(object):
             #result_dict['lambda_1'] = dict(m2.getAttr('x', lambda_1))
             result_dict['lambda_1']=dict(m2.getAttr('x',lambda_1))
             result_dict['lambda_2'] = dict(m2.getAttr('x', lambda_2))
+            result_dict['lambda_5'] = dict(m2.getAttr('x', lambda_5))
             #result_dict['lambda_3'] = m2.getAttr('x', [lambda_3])[0]
             #result_dict['lambda_4'] = m2.getAttr('x', [lambda_4])[0]
             # logger.info("lambda_0 is \n %s"%(result_dict['lambda_0']))
@@ -761,12 +797,14 @@ class FOT(object):
             u_0=sub_result_dict['u_0']#u_0[j,t]
             u_1 = sub_result_dict['u_1']  # u_1[j,t]
             u_2 = sub_result_dict['u_2']  # u_2[j,t]
+            u_5=sub_result_dict['u_5']
             #u_3 = sub_result_dict['u_3']
             #u_4 = sub_result_dict['u_4']# u_3
         else:
             lambda_0=sub_result_dict['lambda_0']#lambda_0[j,t]
             lambda_1=sub_result_dict['lambda_1']#lambda_1[j,t]
             lambda_2=sub_result_dict['lambda_2']#lambda_2[j,t]
+            lambda_5=sub_result_dict['lambda_5']
             #lambda_3=sub_result_dict['lambda_3']#lambda_3
             #lambda_4 = sub_result_dict['lambda_4']  # lambda_3
         '''
@@ -851,6 +889,14 @@ class FOT(object):
                             )
                             for j, t in index_line_period
                         )+
+                        gp.quicksum(
+                            u_5[j,t]*(
+                                -S[1]/self._peak_point_demand[j-1][t-1]*m_delta[j,t]
+                                -S[2]/self._peak_point_demand[j-1][t-1]*(1-m_delta[j,t])
+                                +0.05
+                            )
+                            for j,t in index_line_period
+                        )+
                         #u_3 * (self._eta*(S[1] - S[2]) + 1) +
                         #u_4*(self._eta*(S[2]-S[1])-6)+
                         (gp.quicksum(self._d_j) - gp.quicksum(m_q[j, t] for j, t in index_line_period)) * self._v_p
@@ -897,6 +943,14 @@ class FOT(object):
                             + 2 * self._t_u * S[1] / self._peak_point_demand[j - 1][t - 1] * m_zeta[j, t]
                             + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])
                             - h_2[j,t]*m_N_hat[j,t]
+                    )
+                    for j, t in index_line_period
+                )+
+                gp.quicksum(
+                    lambda_5[j, t] * (
+                            -S[1] / self._peak_point_demand[j - 1][t - 1] * m_delta[j, t]
+                            - S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - m_delta[j, t])
+                            + 0.05
                     )
                     for j, t in index_line_period
                 )
