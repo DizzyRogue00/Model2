@@ -180,12 +180,13 @@ if __name__=="__main__":
     result_twoSizeF=Freight_Systemwide(5, distance, average_distance, speed, demand, peak_point_demand, 'TwoSF')
     print(result_twoSizeF)
     print(result_twoSizeF[0]['headway'])
+    print(result_twoSizeF[0]['N_hat'])
     print(result_twoSizeF[1]['y_0'])
     print(result_twoSizeF[1]['q'])
     print(result_twoSizeF[1]['X'])
     print(result_twoSizeF[1]['delta'])
     print(result_twoSizeF[1]['xi'])
-    print(result_twoSizeF[1]['N_hat'])
+    print(result_twoSizeF[1]['N_bar'])
     #logger.info('The result of two-size systemwide with freight on transit is \n {}'.format(result_twoSizeF))
 
     # with open('data_two.pickle', 'rb') as f:
