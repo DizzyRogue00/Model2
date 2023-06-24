@@ -183,7 +183,7 @@ class FOT(object):
         u_0 = m1.addVars(index_line_period, name='u_0')
         u_1 = m1.addVars(index_line_period, name='u_1')
         u_2=m1.addVars(index_line_period,name='u_2')
-        u_5=m1.addVars(index_line_period,name='u_5')
+        #u_5=m1.addVars(index_line_period,name='u_5')
         u_6=m1.addVars(range(1,self._period+1),name='u_6')
         u_7=m1.addVars(range(1,self._period+1),name='u_7')
         aux_N_1=m1.addVars(index_line_period,name='aux_N_1')
@@ -276,10 +276,12 @@ class FOT(object):
             for j, t in index_line_period), name='sub_2')
         m1.addConstr(self._eta * (S[1] - S[2]) + 1 <= 0, name='sub_3')
         m1.addConstr(self._eta*(S[2]-S[1])-6<=0,name='sub_4')
-        m1.addConstrs((
-                -S[1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]
-                -S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])+0.05<=0
-                for j,t in index_line_period),name='sub_5')
+        m1.addConstrs((-S[1]/self._peak_point_demand[j-1][t-1]+0.05<=0 for j,t in index_line_period),name='sub_5_1')
+        m1.addConstrs((-S[2] / self._peak_point_demand[j - 1][t - 1] + 0.05 <= 0 for j, t in index_line_period),name='sub_5_2')
+        # m1.addConstrs((
+        #         -S[1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]
+        #         -S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])+0.05<=0
+        #         for j,t in index_line_period),name='sub_5')
         m1.addConstrs((-N_bar[1]+N_hat.prod(y['delta'],'*',t)<=0 for t in range(1,self._period+1)),name='sub_6')
         m1.addConstrs((-N_bar[2]
                        +N_hat.sum('*',t)
@@ -313,11 +315,11 @@ class FOT(object):
                         + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
                         -aux_N_2[j,t]
                 )
-                +u_5[j,t]*(
-                    -S[1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
-                    -S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
-                    +0.05
-                )
+                # +u_5[j,t]*(
+                #     -S[1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
+                #     -S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
+                #     +0.05
+                # )
                 for j, t in index_line_period
             )+
             gp.quicksum(
@@ -401,11 +403,11 @@ class FOT(object):
                     + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
                     - aux_N_2[j,t]
             )
-            + u_5[j, t] * (
-                    -S[1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
-                    - S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
-                    + 0.05
-            )
+            # + u_5[j, t] * (
+            #         -S[1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
+            #         - S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
+            #         + 0.05
+            # )
             for j, t in index_line_period
         )
         obj=obj+gp.quicksum(
@@ -441,7 +443,7 @@ class FOT(object):
             #result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_2']=dict(m1.getAttr('x',u_2))
-            result_dict['u_5'] = dict(m1.getAttr('x', u_5))
+            #result_dict['u_5'] = dict(m1.getAttr('x', u_5))
             result_dict['u_6'] = dict(m1.getAttr('x', u_6))
             result_dict['u_7'] = dict(m1.getAttr('x', u_7))
             #result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
@@ -474,7 +476,7 @@ class FOT(object):
             # result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_2']=dict(m1.getAttr('x',u_2))
-            result_dict['u_5'] = dict(m1.getAttr('x', u_5))
+            #result_dict['u_5'] = dict(m1.getAttr('x', u_5))
             result_dict['u_6'] = dict(m1.getAttr('x', u_6))
             result_dict['u_7'] = dict(m1.getAttr('x', u_7))
             #result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
@@ -547,7 +549,7 @@ class FOT(object):
             #lambda_1 = m2.addVars(index_line_period, name='lambda_1')
             lambda_1 = m2.addVars(index_line_period, name='lambda_1')
             lambda_2=m2.addVars(index_line_period,name='lambda_2')
-            lambda_5=m2.addVars(index_line_period,name='lambda_5')
+            #lambda_5=m2.addVars(index_line_period,name='lambda_5')
             lambda_6 = m2.addVars(range(1,self._period+1), name='lambda_6')
             lambda_7 = m2.addVars(range(1,self._period+1), name='lambda_7')
             #lambda_3 = m2.addVar(name='lambda_3')
@@ -555,7 +557,7 @@ class FOT(object):
 
             m2.addConstr(
                 gp.quicksum(
-                    lambda_0[j, t]+lambda_1[j,t]+ lambda_2[j, t]+lambda_5[j,t] for j, t in index_line_period
+                    lambda_0[j, t]+lambda_1[j,t]+ lambda_2[j, t] for j, t in index_line_period
                 )
                 +gp.quicksum(
                     lambda_6[t]+lambda_7[t]
@@ -604,6 +606,9 @@ class FOT(object):
             #                for j, t in index_line_period), name='in_sub_2')
             m2.addConstr(self._eta * (m2_S[1] - m2_S[2]) + 1 <= 0, name='in_sub_3')
             m2.addConstr(self._eta * (m2_S[2] - m2_S[1]) - 6 <= 0, name='in_sub_4')
+            m2.addConstrs((-m2_S[1]/self._peak_point_demand[j-1][t-1]+0.05<=0 for j,t in index_line_period),name='in_sub_5_1')
+            m2.addConstrs((-m2_S[2] / self._peak_point_demand[j - 1][t - 1] + 0.05 <= 0 for j, t in index_line_period),
+                          name='in_sub_5_2')
             m2.addConstrs((
                 -m2_N_bar[1]
                 +m2_N_hat.prod(y['delta'],"*",t)<=0
@@ -643,14 +648,14 @@ class FOT(object):
                 )
                 for j, t in index_line_period
             )
-            m2_obj=m2_obj+gp.quicksum(
-                lambda_5[j,t]*(
-                    -m2_S[1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
-                    -m2_S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
-                    +0.05
-                )
-                for j,t in index_line_period
-            )
+            # m2_obj=m2_obj+gp.quicksum(
+            #     lambda_5[j,t]*(
+            #         -m2_S[1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
+            #         -m2_S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
+            #         +0.05
+            #     )
+            #     for j,t in index_line_period
+            # )
             m2_obj=m2_obj+gp.quicksum(
                 lambda_6[t]*(
                     -m2_N_bar[1]
@@ -699,14 +704,14 @@ class FOT(object):
                             - m2_aux_N_2[j,t]
                     )
                     for j, t in index_line_period
-                )+
-                gp.quicksum(
-                    lambda_5[j, t] * (
-                            -m2_S[1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
-                            - m2_S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
-                            + 0.05
-                )
-                for j, t in index_line_period
+                # )+
+                # gp.quicksum(
+                #     lambda_5[j, t] * (
+                #             -m2_S[1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
+                #             - m2_S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
+                #             + 0.05
+                # )
+                # for j, t in index_line_period
             )+gp.quicksum(
                     lambda_6[t]*(
                         -m2_N_bar[1]
@@ -780,7 +785,7 @@ class FOT(object):
             #result_dict['lambda_1'] = dict(m2.getAttr('x', lambda_1))
             result_dict['lambda_1']=dict(m2.getAttr('x',lambda_1))
             result_dict['lambda_2'] = dict(m2.getAttr('x', lambda_2))
-            result_dict['lambda_5'] = dict(m2.getAttr('x', lambda_5))
+            #result_dict['lambda_5'] = dict(m2.getAttr('x', lambda_5))
             result_dict['lambda_6'] = dict(m2.getAttr('x', lambda_6))
             result_dict['lambda_7'] = dict(m2.getAttr('x', lambda_7))
             #result_dict['lambda_3'] = m2.getAttr('x', [lambda_3])[0]
@@ -918,7 +923,7 @@ class FOT(object):
             u_0=sub_result_dict['u_0']#u_0[j,t]
             u_1 = sub_result_dict['u_1']  # u_1[j,t]
             u_2 = sub_result_dict['u_2']  # u_2[j,t]
-            u_5=sub_result_dict['u_5']
+            #u_5=sub_result_dict['u_5']
             u_6=sub_result_dict['u_6']
             u_7=sub_result_dict['u_7']
             #u_3 = sub_result_dict['u_3']
@@ -927,7 +932,7 @@ class FOT(object):
             lambda_0=sub_result_dict['lambda_0']#lambda_0[j,t]
             lambda_1=sub_result_dict['lambda_1']#lambda_1[j,t]
             lambda_2=sub_result_dict['lambda_2']#lambda_2[j,t]
-            lambda_5=sub_result_dict['lambda_5']
+            #lambda_5=sub_result_dict['lambda_5']
             lambda_6=sub_result_dict['lambda_6']
             lambda_7=sub_result_dict['lambda_7']
             #lambda_3=sub_result_dict['lambda_3']#lambda_3
@@ -1012,14 +1017,14 @@ class FOT(object):
                                     - h_2[j,t]*N_hat[j,t]
                             )
                             for j, t in index_line_period
-                        )+
-                        gp.quicksum(
-                            u_5[j,t]*(
-                                -S[1]/self._peak_point_demand[j-1][t-1]*m_delta[j,t]
-                                -S[2]/self._peak_point_demand[j-1][t-1]*(1-m_delta[j,t])
-                                +0.05
-                            )
-                            for j,t in index_line_period
+                        # )+
+                        # gp.quicksum(
+                        #     u_5[j,t]*(
+                        #         -S[1]/self._peak_point_demand[j-1][t-1]*m_delta[j,t]
+                        #         -S[2]/self._peak_point_demand[j-1][t-1]*(1-m_delta[j,t])
+                        #         +0.05
+                        #     )
+                        #     for j,t in index_line_period
                         )+
                         gp.quicksum(
                             u_6[t]*(
@@ -1083,14 +1088,14 @@ class FOT(object):
                             - h_2[j,t]*N_hat[j,t]
                     )
                     for j, t in index_line_period
-                )+
-                gp.quicksum(
-                    lambda_5[j, t] * (
-                            -S[1] / self._peak_point_demand[j - 1][t - 1] * m_delta[j, t]
-                            - S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - m_delta[j, t])
-                            + 0.05
-                    )
-                    for j, t in index_line_period
+                # )+
+                # gp.quicksum(
+                #     lambda_5[j, t] * (
+                #             -S[1] / self._peak_point_demand[j - 1][t - 1] * m_delta[j, t]
+                #             - S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - m_delta[j, t])
+                #             + 0.05
+                #     )
+                #     for j, t in index_line_period
                 )+gp.quicksum(
                     lambda_6[t]*(
                         -N_bar[1]
@@ -1230,7 +1235,7 @@ class FOT(object):
                 print(result_s['N_bar'])
                 # print(result_s['u_1'])
                 # print(result_s['u_2'])
-                # print(result_s['u_5'])
+                # #print(result_s['u_5'])
                 # print(result_s['u_6'])
                 # print(result_s['u_7'])
                 print(result_s['h_1'])
