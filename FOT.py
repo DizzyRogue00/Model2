@@ -179,6 +179,7 @@ class FOT(object):
         h_2=m1.addVars(index_line_period,lb=0.05,name='h_2')
         #H=m1.addVars(index_line_period,lb=0.05,ub=0.9,name='headway')
         N_hat=m1.addVars(index_line_period,lb=1,ub=100,name='N_hat')
+        N_bar=m1.addVars(range(1,3),name='N_bar')
         u_0 = m1.addVars(index_line_period, name='u_0')
         u_1 = m1.addVars(index_line_period, name='u_1')
         u_2=m1.addVars(index_line_period,name='u_2')
@@ -279,8 +280,8 @@ class FOT(object):
                 -S[1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]
                 -S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])+0.05<=0
                 for j,t in index_line_period),name='sub_5')
-        m1.addConstrs((-y['N_bar'][1]+N_hat.prod(y['delta'],'*',t)<=0 for t in range(1,self._period+1)),name='sub_6')
-        m1.addConstrs((-y['N_bar'][2]
+        m1.addConstrs((-N_bar[1]+N_hat.prod(y['delta'],'*',t)<=0 for t in range(1,self._period+1)),name='sub_6')
+        m1.addConstrs((-N_bar[2]
                        +N_hat.sum('*',t)
                        -N_hat.prod(y['delta'], '*', t) <= 0 for t in range(1, self._period + 1)),
                       name='sub_7')
@@ -321,11 +322,11 @@ class FOT(object):
             )+
             gp.quicksum(
                 u_6[t]*(
-                    -y['N_bar'][1]
+                    -N_bar[1]
                     +N_hat.prod(y['delta'],'*',t)
                 )
                 +u_7[t]*(
-                    -y['N_bar'][2]
+                    -N_bar[2]
                     +N_hat.sum('*',t)
                     -N_hat.prod(y['delta'],'*',t)
                 )
@@ -370,7 +371,7 @@ class FOT(object):
                     +2*self._v_v*self._demand[j-1][t-1]*self._average_distance[j-1]/self._speed[j-1][t-1]
             )*(1-y['delta'][j,t]) for j,t in index_line_period
         )
-        obj=obj+gp.quicksum((self._c+self._e*S[s])*self._recovery/365*y['N_bar'][s] for s in range(1,3))
+        obj=obj+gp.quicksum((self._c+self._e*S[s])*self._recovery/365*N_bar[s] for s in range(1,3))
         obj=obj+(gp.quicksum(self._d_j)-gp.quicksum(y['q'][j,t] for j,t in index_line_period))*self._v_p
         # obj=obj+gp.quicksum(
         #     u_0[j,t]*(y['q'][j,t]*H[j,t]-self._eta*(S[2]-S[1]))
@@ -409,11 +410,11 @@ class FOT(object):
         )
         obj=obj+gp.quicksum(
             u_6[t] * (
-                    -y['N_bar'][1]
+                    -N_bar[1]
                     + N_hat.prod(y['delta'], '*', t)
             )
             + u_7[t] * (
-                    -y['N_bar'][2]
+                    -N_bar[2]
                     + N_hat.sum('*', t)
                     - N_hat.prod(y['delta'], '*', t)
             )
@@ -434,6 +435,7 @@ class FOT(object):
             result_dict['S']=dict(m1.getAttr('x',S))
             result_dict['h_2']=dict(m1.getAttr('x',h_2))
             result_dict['N_hat']=dict(m1.getAttr('x',N_hat))
+            result_dict['N_bar'] = dict(m1.getAttr('x', N_bar))
             #result_dict['headway']={(j,t):result_dict['S'][1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]+result_dict['S'][2]*(1-y['delta'][j,t])/self._peak_point_demand[j-1][t-1] for j,t in index_line_period}
             result_dict['u_0']=dict(m1.getAttr('x',u_0))
             #result_dict['u_1'] = dict(m1.getAttr('x', u_1))
@@ -463,6 +465,7 @@ class FOT(object):
             result_dict['S'] = dict(m1.getAttr('x', S))
             result_dict['h_2'] = dict(m1.getAttr('x', h_2))
             result_dict['N_hat']=dict(m1.getAttr('x',N_hat))
+            result_dict['N_bar'] = dict(m1.getAttr('x', N_bar))
             # result_dict['headway'] = {
             #     (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
             #             result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for j, t in
@@ -537,6 +540,7 @@ class FOT(object):
             #m2_H=m2.addVars(index_line_period,lb=0.05,ub=0.9,name='m2_H')
             m2_h_2 = m2.addVars(index_line_period,lb=0.05, name='m2_h_2')
             m2_N_hat=m2.addVars(index_line_period,lb=1,ub=100,name='m2_N_hat')
+            m2_N_bar=m2.addVars(range(1,3),name='m2_N_bar')
             m2_aux_N_1=m2.addVars(index_line_period,name='m2_aux_N_1')
             m2_aux_N_2=m2.addVars(index_line_period,name='m2_aux_N_2')
             lambda_0 = m2.addVars(index_line_period, name='lambda_0')
@@ -600,6 +604,19 @@ class FOT(object):
             #                for j, t in index_line_period), name='in_sub_2')
             m2.addConstr(self._eta * (m2_S[1] - m2_S[2]) + 1 <= 0, name='in_sub_3')
             m2.addConstr(self._eta * (m2_S[2] - m2_S[1]) - 6 <= 0, name='in_sub_4')
+            m2.addConstrs((
+                -m2_N_bar[1]
+                +m2_N_hat.prod(y['delta'],"*",t)<=0
+                for t in range(1,self._period+1)
+            ),name='in_sub_6')
+            m2.addConstrs(
+                (
+                    -m2_N_bar[2]
+                    +sum(m2_N_hat[item1,item2] for item1,item2 in m2_N_hat.keys() if item2==t)
+                    -m2_N_hat.prod(y['delta'],"*",t)<=0
+                    for t in range(1,self._period+1)
+                ),name='in_sub_7'
+            )
             #
             m2_obj = gp.quicksum(
                 lambda_0[j, t] * (
@@ -636,14 +653,14 @@ class FOT(object):
             )
             m2_obj=m2_obj+gp.quicksum(
                 lambda_6[t]*(
-                    -y['N_bar'][1]
+                    -m2_N_bar[1]
                     +m2_N_hat.prod(y['delta'],'*',t)
                 )
                 for t in range(1,self._period+1)
             )
             m2_obj = m2_obj + gp.quicksum(
                 lambda_7[t] * (
-                        -y['N_bar'][2]
+                        -m2_N_bar[2]
                         +m2_N_hat.sum('*',t)
                         - m2_N_hat.prod(y['delta'], '*', t)
                 )
@@ -692,13 +709,13 @@ class FOT(object):
                 for j, t in index_line_period
             )+gp.quicksum(
                     lambda_6[t]*(
-                        -y['N_bar'][1]
+                        -m2_N_bar[1]
                         +m2_N_hat.prod(y['delta'],'*',t)
                     )
                     for t in range(1,self._period+1)
                 )+gp.quicksum(
                     lambda_7[t]*(
-                        -y['N_bar'][2]
+                        -m2_N_bar[2]
                         +m2_N_hat.sum('*',t)
                         -m2_N_hat.prod(y['delta'],'*',t)
                     )
@@ -752,6 +769,7 @@ class FOT(object):
             result_dict['S'] = dict(m2.getAttr('x', m2_S))
             result_dict['h_2']=dict(m2.getAttr('x',m2_h_2))
             result_dict['N_hat']=dict(m2.getAttr('x',m2_N_hat))
+            result_dict['N_bar'] = dict(m2.getAttr('x', m2_N_bar))
             #print(result_dict['h_2'])
 
             # result_dict['headway'] = {
@@ -849,7 +867,7 @@ class FOT(object):
         y_0 = m.addVar(lb=-GRB.INFINITY,name='y_0')
         #N_hat=m.addVars(index_line_period,lb=1,ub=100,name='N_hat')
         #N_tilde=m.addVars(index_line_period,name='N_tilde')
-        N_bar=m.addVars(range(1,3),name='N_bar')
+        #N_bar=m.addVars(range(1,3),name='N_bar')
         q=m.addVars(index_line_period,ub=30,name='q')
         X=m.addVars(index_line_period,vtype=GRB.BINARY,name='X')
         delta=m.addVars(index_line_period,vtype=GRB.BINARY,name='delta')
@@ -879,7 +897,7 @@ class FOT(object):
         # m.addConstrs((N_bar[1]>=N_tilde.sum('*',t) for t in range(1,self._period+1)),name='c_20')
         # m.addConstrs((N_bar[2]>=N_hat.sum('*',t)-N_tilde.sum('*',t) for t in range(1,self._period+1)),name='c_21')
         # m.addConstrs((N_hat[j,t]>=1 for j,t in index_line_period),name='c_22')#> -> >=
-        m.addConstrs((N_bar[s]>=0 for s in range(1,3)),name='c_23')#> -> >=
+        #m.addConstrs((N_bar[s]>=0 for s in range(1,3)),name='c_23')#> -> >=
 
         m.setObjective(y_0,sense=GRB.MINIMIZE)
         #m.Params.lazyConstraints=1
@@ -895,6 +913,7 @@ class FOT(object):
         h_1=sub_result_dict['h_1']
         h_2=sub_result_dict['h_2']
         N_hat=sub_result_dict['N_hat']
+        N_bar=sub_result_dict['N_bar']
         if sub_result_dict['status']==1:
             u_0=sub_result_dict['u_0']#u_0[j,t]
             u_1 = sub_result_dict['u_1']  # u_1[j,t]
@@ -923,7 +942,7 @@ class FOT(object):
         m_y_0=m.getVarByName('y_0')
         #m_N_hat=gp.tupledict({(j,t):m.getVarByName('N_hat['+str(j)+','+str(t)+']') for j,t in index_line_period})
         #m_N_tilde = gp.tupledict({(j, t): m.getVarByName('N_tilde[' + str(j) + ',' + str(t) + ']') for j, t in index_line_period})
-        m_N_bar=gp.tupledict({j:m.getVarByName('N_bar['+str(j)+']') for j in range(1,3)})
+        #m_N_bar=gp.tupledict({j:m.getVarByName('N_bar['+str(j)+']') for j in range(1,3)})
         m_q = gp.tupledict(
             {(j, t): m.getVarByName('q[' + str(j) + ',' + str(t) + ']') for j, t in index_line_period})
         m_X = gp.tupledict(
@@ -968,7 +987,7 @@ class FOT(object):
                             for j, t in index_line_period
                         ) +
                         gp.quicksum(
-                            m_N_bar[s] * (self._c + self._e * S[s]) * self._recovery / 365
+                            N_bar[s] * (self._c + self._e * S[s]) * self._recovery / 365
                             for s in range(1, 3)
                         ) +
                         gp.quicksum(
@@ -1004,14 +1023,14 @@ class FOT(object):
                         )+
                         gp.quicksum(
                             u_6[t]*(
-                                -m_N_bar[1]
+                                -N_bar[1]
                                 +m_delta.prod(N_hat,'*',t)
                             )
                             for t in range(1,self._period+1)
                         )+
                         gp.quicksum(
                             u_7[t]*(
-                                -m_N_bar[2]
+                                -N_bar[2]
                                 +sum(N_hat[item1,item2] for item1,item2 in N_hat.keys() if item2==t)
                                 -m_delta.prod(N_hat,'*',t)
                             )
@@ -1074,13 +1093,13 @@ class FOT(object):
                     for j, t in index_line_period
                 )+gp.quicksum(
                     lambda_6[t]*(
-                        -m_N_bar[1]
+                        -N_bar[1]
                         +m_delta.prod(N_hat,'*',t)
                     )
                     for t in range(1,self._period+1)
                 )+gp.quicksum(
                     lambda_7[t]*(
-                        -m_N_bar[2]
+                        -N_bar[2]
                         +sum(N_hat[item1,item2] for item1,item2 in N_hat.keys() if item2==t)
                         -m_delta.prod(N_hat,'*',t)
                     )
@@ -1141,7 +1160,7 @@ class FOT(object):
                 y_dict['y_0']=m.objVal
                 #y_dict['N_hat']=dict(m.getAttr('x',m_N_hat))
                 #y_dict['N_tilde']=dict(m.getAttr('x',m_N_tilde))
-                y_dict['N_bar']=dict(m.getAttr('x',m_N_bar))
+                #y_dict['N_bar']=dict(m.getAttr('x',m_N_bar))
                 y_dict['q']=dict(m.getAttr('x',m_q))
                 y_dict['X']=dict(m.getAttr('x',m_X))
                 y_dict['delta']=dict(m.getAttr('x',m_delta))
@@ -1153,7 +1172,7 @@ class FOT(object):
                 y_dict['y_0'] = m.objVal
                 #y_dict['N_hat'] = dict(m.getAttr('x', m_N_hat))
                 #y_dict['N_tilde'] = dict(m.getAttr('x', m_N_tilde))
-                y_dict['N_bar'] = dict(m.getAttr('x', m_N_bar))
+                #y_dict['N_bar'] = dict(m.getAttr('x', m_N_bar))
                 y_dict['q'] = dict(m.getAttr('x', m_q))
                 y_dict['X'] = dict(m.getAttr('x', m_X))
                 y_dict['delta'] = dict(m.getAttr('x', m_delta))
@@ -1193,6 +1212,7 @@ class FOT(object):
                 logger.info('headway_2 is \n %s' % (result_s['h_2']))
                 logger.info('v_hat is \n %s'%(result_s['v_hat']))
                 logger.info('N_hat is \n %s' % (result_s['N_hat']))
+                logger.info('N_bar is \n %s' % (result_s['N_bar']))
 
                 pickle.dump(result_s,f)
                 ob=result_s['objval']
@@ -1207,18 +1227,19 @@ class FOT(object):
                 print(result_s['S'])
                 print(result_s['headway'])
                 print(result_s['N_hat'])
-                print(result_s['u_1'])
-                print(result_s['u_2'])
-                print(result_s['u_5'])
-                print(result_s['u_6'])
-                print(result_s['u_7'])
+                print(result_s['N_bar'])
+                # print(result_s['u_1'])
+                # print(result_s['u_2'])
+                # print(result_s['u_5'])
+                # print(result_s['u_6'])
+                # print(result_s['u_7'])
                 print(result_s['h_1'])
                 print(result_s['h_2'])
                 print(result_s['v_hat'])
 
                 #print(result_s['u_2'])
                 #print(y['N_hat'])
-                print(y['N_bar'])
+                #print(y['N_bar'])
                 print(y['X'])
                 print(y['delta'])
                 print(y['q'])
