@@ -745,7 +745,7 @@ class FOT(object):
         # delta: delta_j_t
         # xi: xi_j_t
         # zeta: zeta_j_t
-        y_0 = m.addVar(name='y_0')
+        y_0 = m.addVar(lb=-GRB.INFINITY,name='y_0')
         N_hat=m.addVars(index_line_period,lb=1,ub=100,name='N_hat')
         N_tilde=m.addVars(index_line_period,name='N_tilde')
         N_bar=m.addVars(range(1,3),name='N_bar')
