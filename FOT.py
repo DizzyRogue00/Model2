@@ -262,7 +262,7 @@ class FOT(object):
         #     for j, t in index_line_period), name='sub_2')
         m1.addConstr(self._eta * (S[1] - S[2]) + 1 <= 0, name='sub_3')
         m1.addConstr(self._eta*(S[2]-S[1])-6<=0,name='sub_4')
-        m1.addConstr(S[1]<=20,name='sub_6')
+        #m1.addConstr(S[1]<=20,name='sub_6')
         # m1.addConstrs((-S[1]/self._peak_point_demand[j-1][t-1]+0.05<=0 for j,t in index_line_period),name='sub_5_1')
         # m1.addConstrs((-S[2] / self._peak_point_demand[j - 1][t - 1] + 0.05 <= 0 for j, t in index_line_period),name='sub_5_2')
         # m1.addConstrs((
