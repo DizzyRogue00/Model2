@@ -312,6 +312,35 @@ class FOT(object):
                 for j, t in index_line_period
             )>= -1e-3
         )
+        m1.addConstr(
+            gp.quicksum(
+                u_0[j, t] * (y['q'][j, t] * S[1] - self._eta * (S[2] - S[1]) * self._peak_point_demand[j - 1][t - 1])
+                + u_1[j, t] * (
+                        2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
+                    j, t]
+                        + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
+                        self._peak_point_demand[j - 1][t - 1] * S[1]
+                        + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+                        - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * S[1] * y['delta'][j, t]
+                        - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * S[2]
+                        + y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * S[2] * y['delta'][j, t]
+                )
+                + u_2[j, t] * (
+                        2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
+                    j, t]
+                        + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
+                        self._peak_point_demand[j - 1][t - 1] * S[1]
+                        + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+                        - y['N_hat'][j, t] * h_2[j, t]
+                )
+                + u_5[j, t] * (
+                        -S[1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
+                        - S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
+                        + 0.05
+                )
+                for j, t in index_line_period
+            ) <=0
+        )
         #2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._gammar/self._speed[j-1][t-1]*S_inverse[1]+2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._beta/self._speed[j-1][t-1]+2*self._gammar*self._t_u*y['q'][j,t]+2*self._beta*self._t_u*y['q'][j,t]*S[1]
         #self._v_w*self._demand[j-1][t-1]/self._peak_point_demand[j-1][t-1]*S[1]
         #2*self._v_v*self._demand[j-1][t-1]*self._average_distance[j-1]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
@@ -400,10 +429,15 @@ class FOT(object):
         result_dict = {}
         if m1.status==GRB.OPTIMAL:
             result_dict['S'] = dict(m1.getAttr('x', S))
+            print(result_dict['S'])
             result_dict['h_2'] = dict(m1.getAttr('x', h_2))
+            result_dict['u_0'] = dict(m1.getAttr('x', u_0))
+            result_dict['u_1'] = dict(m1.getAttr('x', u_1))
+            result_dict['u_2'] = dict(m1.getAttr('x', u_2))
+            result_dict['u_5'] = dict(m1.getAttr('x', u_5))
             check_feasible=0
             for j,t in index_line_period:
-                if y['q'][j,t]*result_dict['S'][1]-self._eta*(result_dict['S'][2]-result_dict['S'][1])*self._peak_point_demand[j-1][t-1]<=0:
+                if y['q'][j,t]*result_dict['S'][1]-self._eta*(result_dict['S'][2]-result_dict['S'][1])*self._peak_point_demand[j-1][t-1]>0:
                     check_feasible+=1
                 if (2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
                 j, t]
@@ -412,19 +446,20 @@ class FOT(object):
                     + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
                     - y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]*result_dict['S'][1]
                     -y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][2]
-                    +y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]*result_dict['S'][2])<=0:
+                    +y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]*result_dict['S'][2])>0:
                     check_feasible+=1
                 if (2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
                 j, t]
                     + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] / self._peak_point_demand[j - 1][
                         t - 1] * result_dict['S'][1]
                     + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                    - y['N_hat'][j,t]*result_dict['h_2'][j,t])<=0:
+                    - y['N_hat'][j,t]*result_dict['h_2'][j,t])>0:
                     check_feasible+=1
                 if (-result_dict['S'][1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
                     - result_dict['S'][2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
-                    + 0.05)<=0:
+                    + 0.05)>0:
                     check_feasible+=1
+            print(check_feasible)
             if check_feasible==0:
                 logger.info('The solution of subproblem is feasible, u is generated multiplier.')
                 logger.info('The objective value of subproblem (feasible) is %s' % (m1.objVal))
@@ -609,7 +644,7 @@ class FOT(object):
             check_feasible = 0
             for j, t in index_line_period:
                 if y['q'][j, t] * result_dict['S'][1] - self._eta * (result_dict['S'][2] - result_dict['S'][1]) * \
-                        self._peak_point_demand[j - 1][t - 1] <= 0:
+                        self._peak_point_demand[j - 1][t - 1] > 0:
                     check_feasible += 1
                 if (2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
                     j, t]
@@ -619,18 +654,18 @@ class FOT(object):
                     - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t] * result_dict['S'][1]
                     - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][2]
                     + y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t] * result_dict['S'][
-                        2]) <= 0:
+                        2]) > 0:
                     check_feasible += 1
                 if (2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
                     j, t]
                     + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] / self._peak_point_demand[j - 1][
                         t - 1] * result_dict['S'][1]
                     + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                    - y['N_hat'][j, t] * result_dict['h_2'][j, t]) <= 0:
+                    - y['N_hat'][j, t] * result_dict['h_2'][j, t]) > 0:
                     check_feasible += 1
                 if (-result_dict['S'][1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
                     - result_dict['S'][2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
-                    + 0.05) <= 0:
+                    + 0.05) > 0:
                     check_feasible += 1
             if check_feasible == 0:
                 logger.info('The solution of subproblem is feasible (time limit), u is generated multiplier.')
