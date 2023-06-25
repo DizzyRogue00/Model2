@@ -85,6 +85,7 @@ def Freight_Systemwide(routeNo,distance,average_distance,speed,demand,peak_point
             result_init = Freight_Systemwide(routeNo, distance, average_distance, speed, demand, peak_point_demand, 'OneS')
         period=len(demand[0])
         y_initial={}
+        y_initial['y_0']=-float("inf")
         y_initial['N_hat']=result_init['n_jt']
         #y_initial['N_hat'] = {(j,t):10 for j in range(1,routeNo+1) for t in range(1,period+1)}
         y_initial['N_bar']={1:0,2:result_init['fleet_size']}
@@ -180,8 +181,8 @@ if __name__=="__main__":
     result_twoSizeF=Freight_Systemwide(5, distance, average_distance, speed, demand, peak_point_demand, 'TwoSF')
     print(result_twoSizeF)
     print(result_twoSizeF[0]['headway'])
-    print(result_twoSizeF[0]['N_hat'])
-    print(result_twoSizeF[0]['N_bar'])
+    print(result_twoSizeF[1]['N_hat'])
+    print(result_twoSizeF[1]['N_bar'])
     print(result_twoSizeF[1]['y_0'])
     print(result_twoSizeF[1]['q'])
     print(result_twoSizeF[1]['X'])
