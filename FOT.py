@@ -310,7 +310,7 @@ class FOT(object):
                     +0.05
                 )
                 for j, t in index_line_period
-            )>= -100+1e-3
+            )>= -1e-3
         )
         #2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._gammar/self._speed[j-1][t-1]*S_inverse[1]+2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._beta/self._speed[j-1][t-1]+2*self._gammar*self._t_u*y['q'][j,t]+2*self._beta*self._t_u*y['q'][j,t]*S[1]
         #self._v_w*self._demand[j-1][t-1]/self._peak_point_demand[j-1][t-1]*S[1]
@@ -892,7 +892,7 @@ class FOT(object):
 
             m2.addConstr(
                 gp.quicksum(
-                    lambda_0[j, t]+lambda_1[j,t]+ lambda_2[j, t]+lambda_5 for j, t in index_line_period
+                    lambda_0[j, t]+lambda_1[j,t]+ lambda_2[j, t]+lambda_5[j,t] for j, t in index_line_period
                 )== 1,name='scale_lambda')
             m2.addConstrs(((self._v_w * self._demand[j - 1][t - 1] + 2 * self._v_v * self._t_u * self._demand[j - 1][
                 t - 1] * self._average_distance[j - 1] / self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] *
@@ -1561,16 +1561,16 @@ class FOT(object):
                 UB=min(UB,ob)
 
                 y=self.solveMaster(m,result_s)
-
+                # print(result_s['S'])
                 # print(result_s['u_0'])
                 # print(result_s['u_1'])
                 # print(result_s['u_2'])
-                # print(result_s['u_3'])
+                # print(result_s['u_5'])
                 print(result_s['S'])
                 print(result_s['headway'])
-                # print(result_s['u_1'])
-                # print(result_s['u_2'])
-                # #print(result_s['u_5'])
+                #print(result_s['u_1'])
+                #print(result_s['u_2'])
+                #print(result_s['u_5'])
                 # print(result_s['u_6'])
                 # print(result_s['u_7'])
                 print(result_s['h_1'])
@@ -1607,7 +1607,90 @@ class FOT(object):
                 logger.info("y[q]: %s"%(y['q']))
                 iter+=1
                 UB_LB_tol_dict[iter]=(UB,LB,tol)
+
+                # S = result_s['S']
+                # h_2 = result_s['h_2']
+                # u_0 = result_s['u_0']
+                # u_1 = result_s['u_1']
+                # u_2 = result_s['u_2']
+                # u_5 = result_s['u_5']
+                # m_N_hat = y['N_hat']
+                # m_N_tilde = y['N_tilde']
+                # m_N_bar = y['N_bar']
+                # m_q = y['q']
+                # m_X = y['X']
+                # m_delta = y['delta']
+                # m_xi = y['xi']
+                # m_zeta = y['zeta']
+                # print("okokokokokoko")
+                # sum_zc = 0
+                # for j in range(1, self._routeNo + 1):
+                #     for t in range(1, self._period + 1):
+                #         sum_zc = sum_zc + (m_xi[j, t] * (2 * (self._alpha - 1) * self._distance[j - 1] * (
+                #                 self._gammar + self._beta * S[1]) * self._peak_point_demand[j - 1][t - 1] / (
+                #                                                  self._speed[j - 1][t - 1] * S[1]) + 2 * (
+                #                                                  self._alpha - 1) * self._v_v * self._demand[j - 1][
+                #                                              t - 1] *
+                #                                          self._average_distance[j - 1] / self._speed[j - 1][t - 1]) +
+                #                            m_delta[j, t] * (2 * self._distance[j - 1] * self._peak_point_demand[j - 1][
+                #                     t - 1] * self._gammar * (S[2] - S[1]) / (
+                #                                                     self._speed[j - 1][t - 1] * S[1] * S[
+                #                                                 2]) + self._v_w *
+                #                                             self._demand[j - 1][t - 1] * (S[1] - S[2]) /
+                #                                             self._peak_point_demand[j - 1][t - 1]) +
+                #                            m_zeta[j, t] * (2 * (
+                #                             self._gammar + self._beta * S[1]) * self._t_u + 2 * self._v_v *
+                #                                            self._demand[j - 1][t - 1] * self._average_distance[
+                #                                                j - 1] * self._t_u * S[
+                #                                                1] / (self._distance[j - 1] *
+                #                                                      self._peak_point_demand[j - 1][t - 1])) +
+                #                            2 * self._distance[j - 1] * (self._gammar + self._beta * S[2]) *
+                #                            self._peak_point_demand[j - 1][t - 1] / (
+                #                                        self._speed[j - 1][t - 1] * S[2]) + self._v_w *
+                #                            self._demand[j - 1][t - 1] * S[2] / self._peak_point_demand[j - 1][
+                #                                t - 1] + 2 * self._v_v *
+                #                            self._demand[j - 1][t - 1] * self._average_distance[j - 1] /
+                #                            self._speed[j - 1][t - 1])
+                #
+                #         sum_zc = sum_zc + (
+                #                 u_0[j, t] * (
+                #                 m_q[j, t] * S[1] - self._eta * (S[2] - S[1]) * self._peak_point_demand[j - 1][t - 1])
+                #         )
+                #
+                #         sum_zc = sum_zc + (
+                #                 u_1[j, t] * (
+                #                 +2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
+                #                 + 2 * self._t_u * S[1] / self._peak_point_demand[j - 1][t - 1] * m_zeta[j, t]
+                #                 + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])
+                #                 - S[1] / self._peak_point_demand[j - 1][t - 1] * m_N_tilde[j, t]
+                #                 - S[2] / self._peak_point_demand[j - 1][t - 1] * m_N_hat[j, t]
+                #                 + S[2] / self._peak_point_demand[j - 1][t - 1] * m_N_tilde[j, t]
+                #         )
+                #         )
+                #
+                #         sum_zc = sum_zc + (
+                #                 u_2[j, t] * (
+                #                 +2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
+                #                 + 2 * self._t_u * S[1] / self._peak_point_demand[j - 1][t - 1] * m_zeta[j, t]
+                #                 + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])
+                #                 - h_2[j, t] * m_N_hat[j, t]
+                #         )
+                #         )
+                #
+                #         sum_zc = sum_zc + (
+                #                 u_5[j, t] * (
+                #                 -S[1] / self._peak_point_demand[j - 1][t - 1] * m_delta[j, t]
+                #                 - S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - m_delta[j, t])
+                #                 + 0.05
+                #         )
+                #         )
+                # sum_zc = sum_zc + m_N_bar[1] * (self._c + self._e * S[1]) * self._recovery / 365 + m_N_bar[2] * (
+                #             self._c + self._e * S[2]) * self._recovery / 365
+                # sum_zc = sum_zc + ((sum(self._d_j) - sum(
+                #     m_q[j, t] for j in range(1, self._routeNo + 1) for t in range(1, self._period + 1))) * self._v_p)
+                # print(sum_zc)
             pickle.dump(UB_LB_tol_dict,f)
+
 
         return result_s,y,UB_LB_tol_dict
 
