@@ -174,7 +174,7 @@ class FOT(object):
 
         index_line_period = gp.tuplelist([(line, time) for line in range(1, self._routeNo + 1) for time in range(1, self._period + 1)])
 
-        S=m1.addVars(range(1,3),lb=1,ub=100,name='S')
+        S=m1.addVars(range(1,3),lb=1,ub=200,name='S')
         S_inverse=m1.addVars(range(1,3),name='S_inverse')
         h_2=m1.addVars(index_line_period,lb=0.05,name='h_2')
         #H=m1.addVars(index_line_period,lb=0.05,ub=0.9,name='headway')
@@ -236,39 +236,39 @@ class FOT(object):
                        )
             for j,t in index_line_period),name='aux_1'
         )
-        # m1.addConstrs(
-        #     (y['q'][j, t] * S[1] - self._eta * (S[2] - S[1])*self._peak_point_demand[j-1][t-1] <= 0
-        #      for j, t in index_line_period), name='sub_0')
+        m1.addConstrs(
+            (y['q'][j, t] * S[1] - self._eta * (S[2] - S[1])*self._peak_point_demand[j-1][t-1] <= 0
+             for j, t in index_line_period), name='sub_0')
         #m1.addConstrs((y['q'][j,t]*S[1]-self._eta*(S[2]-S[1])*self._peak_point_demand[j-1][t-1]<=0 for j,t in index_line_period),name='sub_0')
         # m1.addConstrs((-y['N_hat'][j, t] * H[j, t]
         #                + 2 * self._distance[j - 1] * y['X'][j, t] * y['delta'][j, t] * (self._alpha * self._distance[j - 1]*self._peak_point_demand[j-1][t-1] + self._t_u * y['q'][j, t] * self._speed[j-1][t-1]*S[1]) / (self._speed[j - 1][t - 1] * self._distance[j - 1]*self._peak_point_demand[j-1][t-1])
         #                + 2 * self._distance[j - 1] * (1 - y['X'][j, t] * y['delta'][j, t]) / self._speed[j - 1][t - 1] <= 0
         #                for j, t in index_line_period), name='sub_2')
-        # m1.addConstrs((
-        #     2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *y['delta'][j, t]
-        #     +2*self._t_u*y['X'][j,t]*y['delta'][j,t]*y['q'][j,t]/self._peak_point_demand[j-1][t-1]*S[1]
-        #     +2*self._distance[j-1]/self._speed[j-1][t-1]*(1-y['X'][j,t]*y['delta'][j,t])
-        #     -y['N_hat'][j,t]*S[1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]
-        #     -y['N_hat'][j,t]*S[2]*(1-y['delta'][j,t])/self._peak_point_demand[j-1][t-1]
-        #     <=0
-        #     for j,t in index_line_period),name='sub_1')
-        # m1.addConstrs((
-        #     2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][j, t]
-        #     + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] / self._peak_point_demand[j - 1][t - 1] *
-        #     S[1]
-        #     + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-        #     - y['N_hat'][j, t]*h_2[j,t]
-        #     <= 0
-        #     for j, t in index_line_period), name='sub_2')
+        m1.addConstrs((
+            2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *y['delta'][j, t]
+            +2*self._t_u*y['X'][j,t]*y['delta'][j,t]*y['q'][j,t]/self._peak_point_demand[j-1][t-1]*S[1]
+            +2*self._distance[j-1]/self._speed[j-1][t-1]*(1-y['X'][j,t]*y['delta'][j,t])
+            -y['N_hat'][j,t]*S[1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]
+            -y['N_hat'][j,t]*S[2]*(1-y['delta'][j,t])/self._peak_point_demand[j-1][t-1]
+            <=0
+            for j,t in index_line_period),name='sub_1')
+        m1.addConstrs((
+            2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][j, t]
+            + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] / self._peak_point_demand[j - 1][t - 1] *
+            S[1]
+            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+            - y['N_hat'][j, t]*h_2[j,t]
+            <= 0
+            for j, t in index_line_period), name='sub_2')
         m1.addConstr(self._eta * (S[1] - S[2]) + 1 <= 0, name='sub_3')
         m1.addConstr(self._eta*(S[2]-S[1])-6<=0,name='sub_4')
         #m1.addConstr(S[1]<=20,name='sub_6')
         # m1.addConstrs((-S[1]/self._peak_point_demand[j-1][t-1]+0.05<=0 for j,t in index_line_period),name='sub_5_1')
         # m1.addConstrs((-S[2] / self._peak_point_demand[j - 1][t - 1] + 0.05 <= 0 for j, t in index_line_period),name='sub_5_2')
-        # m1.addConstrs((
-        #         -S[1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]
-        #         -S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])+0.05<=0
-        #         for j,t in index_line_period),name='sub_5')
+        m1.addConstrs((
+                -S[1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]
+                -S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])+0.05<=0
+                for j,t in index_line_period),name='sub_5')
         # m1.addConstrs((-N_bar[1]+N_hat.prod(y['delta'],'*',t)<=0 for t in range(1,self._period+1)),name='sub_6')
         # m1.addConstrs((-N_bar[2]
         #                +N_hat.sum('*',t)
@@ -310,36 +310,7 @@ class FOT(object):
                     +0.05
                 )
                 for j, t in index_line_period
-            )>= -1e-3
-        )
-        m1.addConstr(
-            gp.quicksum(
-                u_0[j, t] * (y['q'][j, t] * S[1] - self._eta * (S[2] - S[1]) * self._peak_point_demand[j - 1][t - 1])
-                + u_1[j, t] * (
-                        2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
-                    j, t]
-                        + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
-                        self._peak_point_demand[j - 1][t - 1] * S[1]
-                        + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                        - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * S[1] * y['delta'][j, t]
-                        - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * S[2]
-                        + y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * S[2] * y['delta'][j, t]
-                )
-                + u_2[j, t] * (
-                        2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
-                    j, t]
-                        + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
-                        self._peak_point_demand[j - 1][t - 1] * S[1]
-                        + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                        - y['N_hat'][j, t] * h_2[j, t]
-                )
-                + u_5[j, t] * (
-                        -S[1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
-                        - S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
-                        + 0.05
-                )
-                for j, t in index_line_period
-            ) <=0
+            )>= -100+1e-3
         )
         #2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._gammar/self._speed[j-1][t-1]*S_inverse[1]+2*self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._beta/self._speed[j-1][t-1]+2*self._gammar*self._t_u*y['q'][j,t]+2*self._beta*self._t_u*y['q'][j,t]*S[1]
         #self._v_w*self._demand[j-1][t-1]/self._peak_point_demand[j-1][t-1]*S[1]
@@ -428,772 +399,771 @@ class FOT(object):
         logger.info('Sub Problem status: {}'.format(m1.status))
         result_dict = {}
         if m1.status==GRB.OPTIMAL:
-            result_dict['S'] = dict(m1.getAttr('x', S))
-            print(result_dict['S'])
-            result_dict['h_2'] = dict(m1.getAttr('x', h_2))
-            result_dict['u_0'] = dict(m1.getAttr('x', u_0))
-            result_dict['u_1'] = dict(m1.getAttr('x', u_1))
-            result_dict['u_2'] = dict(m1.getAttr('x', u_2))
-            result_dict['u_5'] = dict(m1.getAttr('x', u_5))
-            check_feasible=0
-            for j,t in index_line_period:
-                if y['q'][j,t]*result_dict['S'][1]-self._eta*(result_dict['S'][2]-result_dict['S'][1])*self._peak_point_demand[j-1][t-1]>0:
-                    check_feasible+=1
-                if (2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
-                j, t]
-                    + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] / self._peak_point_demand[j - 1][
-                        t - 1] * result_dict['S'][1]
-                    + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                    - y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]*result_dict['S'][1]
-                    -y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][2]
-                    +y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]*result_dict['S'][2])>0:
-                    check_feasible+=1
-                if (2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
-                j, t]
-                    + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] / self._peak_point_demand[j - 1][
-                        t - 1] * result_dict['S'][1]
-                    + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                    - y['N_hat'][j,t]*result_dict['h_2'][j,t])>0:
-                    check_feasible+=1
-                if (-result_dict['S'][1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
-                    - result_dict['S'][2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
-                    + 0.05)>0:
-                    check_feasible+=1
-            print(check_feasible)
-            if check_feasible==0:
-                logger.info('The solution of subproblem is feasible, u is generated multiplier.')
-                logger.info('The objective value of subproblem (feasible) is %s' % (m1.objVal))
-                result_dict['objval'] = m1.objVal
-                result_dict['u_0'] = dict(m1.getAttr('x', u_0))
-                result_dict['u_1'] = dict(m1.getAttr('x', u_1))
-                result_dict['u_2'] = dict(m1.getAttr('x', u_2))
-                result_dict['u_5'] = dict(m1.getAttr('x', u_5))
-                result_dict['v_hat'] = {
-                    (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][
-                        t - 1] / (
-                                    self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][
-                                t - 1] + self._t_u * y['q'][j, t] *
-                                    self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
-                result_dict['h_1'] = {
-                    (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
-                            result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for
-                    j, t in index_line_period}
-                result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in
-                                          index_line_period}
-                result_dict['status'] = 1
-            else:
-                logger.info('The solution of subproblem is infeasible, generate lambda.')
-                m2 = gp.Model('infeasibleSubProblem')
-                m2.setParam('nonconvex', 2)
-                m2.Params.timeLimit = 200
-                lambda_0 = m2.addVars(index_line_period, name='lambda_0')
-                lambda_1 = m2.addVars(index_line_period, name='lambda_1')
-                lambda_2 = m2.addVars(index_line_period, name='lambda_2')
-                lambda_5=m2.addVars(index_line_period,name='lambda_5')
-
-                m2.addConstr(
-                    gp.quicksum(
-                        lambda_0[j,t]+lambda_1[j,t]+lambda_2[j,t]+lambda_5[j,t]
-                        for j,t in index_line_period
-                    )==1,name='scale_lambda'
-                )
-                m2_obj = gp.quicksum(
-                    lambda_0[j, t] * (
-                            y['q'][j, t] * result_dict['S'][1] - self._eta * (result_dict['S'][2] - result_dict['S'][1]) * self._peak_point_demand[j - 1][
-                        t - 1])
-                    for j, t in index_line_period
-                )
-                m2_obj = m2_obj + gp.quicksum(
-                    lambda_1[j, t] * (
-                            2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
-                            y['delta'][j, t]
-                            + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
-                            self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
-                            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-                                        1 - y['X'][j, t] * y['delta'][j, t])
-                            - y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][1]*y['delta'][j,t]
-                            -y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][2]
-                            +y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][2]*y['delta'][j,t]
-                    )
-                    for j, t in index_line_period
-                )
-                m2_obj = m2_obj + gp.quicksum(
-                    lambda_2[j, t] * (
-                            2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
-                            y['delta'][
-                                j, t]
-                            + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
-                            self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
-                            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-                                        1 - y['X'][j, t] * y['delta'][j, t])
-                            - y['N_hat'][j,t]*result_dict['h_2'][j,t]
-                    )
-                    for j, t in index_line_period
-                )
-                m2_obj=m2_obj+gp.quicksum(
-                    lambda_5[j,t]*(
-                        -result_dict['S'][1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
-                        -result_dict['S'][2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
-                        +0.05
-                    )
-                    for j,t in index_line_period
-                )
-                m2.addConstr(
-                    gp.quicksum(
-                        lambda_0[j, t] * (
-                                y['q'][j, t] * result_dict['S'][1] - self._eta * (
-                                    result_dict['S'][2] - result_dict['S'][1]) * self._peak_point_demand[j - 1][
-                                    t - 1])
-                        for j, t in index_line_period
-                    )
-                    +gp.quicksum(
-                    lambda_1[j, t] * (
-                            2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
-                            y['delta'][j, t]
-                            + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
-                            self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
-                            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-                                        1 - y['X'][j, t] * y['delta'][j, t])
-                            - y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][1]*y['delta'][j,t]
-                            -y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][2]
-                            +y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][2]*y['delta'][j,t]
-                    )
-                    for j, t in index_line_period
-                )
-                +gp.quicksum(
-                    lambda_2[j, t] * (
-                            2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
-                            y['delta'][
-                                j, t]
-                            + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
-                            self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
-                            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-                                        1 - y['X'][j, t] * y['delta'][j, t])
-                            - y['N_hat'][j,t]*result_dict['h_2'][j,t]
-                    )
-                    for j, t in index_line_period
-                )
-                +gp.quicksum(
-                    lambda_5[j,t]*(
-                        -result_dict['S'][1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
-                        -result_dict['S'][2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
-                        +0.05
-                    )
-                    for j,t in index_line_period
-                )>=1e-4
-                )
-
-                m2.setObjective(m2_obj, gp.GRB.MINIMIZE)
-                m2.update()
-                m2.optimize()
-
-                print(m2.status)
-                result_dict['objval'] = float('inf')
-                result_dict['lambda_0'] = dict(m2.getAttr('x', lambda_0))
-                result_dict['lambda_1'] = dict(m2.getAttr('x', lambda_1))
-                result_dict['lambda_2'] = dict(m2.getAttr('x', lambda_2))
-                result_dict['lambda_5'] = dict(m2.getAttr('x', lambda_5))
-
-                result_dict['v_hat'] = {
-                    (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][
-                        t - 1] / (
-                                    self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][
-                                t - 1] + self._t_u *
-                                    y['q'][j, t] *
-                                    self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
-                result_dict['h_1'] = {
-                    (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
-                            result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
-                    for j, t in index_line_period}
-                # print(result_dict['S'])
-                result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in
-                                          index_line_period}
-
-                result_dict['status'] = 2
-
-                logger.info('Sub Problem status (infeasible): {}'.format(m2.status))
-                logger.info('The objective value of subproblem is %s' % (m2.objVal))
-            # logger.info('The objective value of subproblem is %s'%(m1.objVal))
-            # result_dict['objval']=m1.objVal
-            # result_dict['S']=dict(m1.getAttr('x',S))
-            # result_dict['h_2']=dict(m1.getAttr('x',h_2))
-            # #result_dict['headway']={(j,t):result_dict['S'][1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]+result_dict['S'][2]*(1-y['delta'][j,t])/self._peak_point_demand[j-1][t-1] for j,t in index_line_period}
-            # result_dict['u_0']=dict(m1.getAttr('x',u_0))
-            # #result_dict['u_1'] = dict(m1.getAttr('x', u_1))
-            # result_dict['u_1'] = dict(m1.getAttr('x', u_1))
-            # result_dict['u_2']=dict(m1.getAttr('x',u_2))
-            # #result_dict['u_5'] = dict(m1.getAttr('x', u_5))
-            # #result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
-            # #result_dict['u_4'] = m1.getAttr('x', [u_4])[0]
-            # #logger.info(result_dict['u_3'])
-            # result_dict['v_hat']={(j,t):self._speed[j-1][t-1] * self._distance[j-1] * self._peak_point_demand[j-1][t-1] / (
-            #             self._alpha * self._distance[j-1] * self._peak_point_demand[j-1][t-1] + self._t_u * y['q'][j, t] *
-            #             self._speed[j-1][t-1] * result_dict['S'][1]) for j,t in index_line_period}
-            # result_dict['h_1']={(j,t):result_dict['S'][1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]+result_dict['S'][2]*(1-y['delta'][j,t])/self._peak_point_demand[j-1][t-1] for j,t in index_line_period}
-            # result_dict['headway']={key:np.min((result_dict['h_1'][key],result_dict['h_2'][key])) for key in index_line_period}
-            # # h2_hat={(j,t):np.sqrt(1/((self._v_w*self._demand[j-1][t-1]+2*self._alpha*self._v_v*self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*self._demand[j-1][t-1]*self._peak_point_demand[j-1][t-1]*self._average_distance[j-1]*y['X'][j,t]*y['delta'][j,t]/(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._speed[j-1][t-1]))*self._speed[j-1][t-1]/(2*self._distance[j-1]*(self._gammar*(1-(1-self._alpha)*y['X'][j,t]*y['delta'][j,t])+self._beta*y['delta'][j,t]*result_dict['S'][1]*(1-(1-self._alpha)*y['X'][j,t])+self._beta*(1-y['delta'][j,t])*result_dict['S'][2]))))
-            # #     for j,t in index_line_period
-            # #         }
-            # # result_dict['headway']={key:np.min((h1_hat[key],h2_hat[key])) for key in index_line_period}
-            # # result_dict['headway_1'] = h1_hat
-            # # result_dict['headway_2'] = h2_hat
-            # result_dict['status']=1
-        elif m1.status == GRB.TIME_LIMIT:
-            result_dict['S'] = dict(m1.getAttr('x', S))
-            result_dict['h_2'] = dict(m1.getAttr('x', h_2))
-            check_feasible = 0
-            for j, t in index_line_period:
-                if y['q'][j, t] * result_dict['S'][1] - self._eta * (result_dict['S'][2] - result_dict['S'][1]) * \
-                        self._peak_point_demand[j - 1][t - 1] > 0:
-                    check_feasible += 1
-                if (2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
-                    j, t]
-                    + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] / self._peak_point_demand[j - 1][
-                        t - 1] * result_dict['S'][1]
-                    + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                    - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t] * result_dict['S'][1]
-                    - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][2]
-                    + y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t] * result_dict['S'][
-                        2]) > 0:
-                    check_feasible += 1
-                if (2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
-                    j, t]
-                    + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] / self._peak_point_demand[j - 1][
-                        t - 1] * result_dict['S'][1]
-                    + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                    - y['N_hat'][j, t] * result_dict['h_2'][j, t]) > 0:
-                    check_feasible += 1
-                if (-result_dict['S'][1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
-                    - result_dict['S'][2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
-                    + 0.05) > 0:
-                    check_feasible += 1
-            if check_feasible == 0:
-                logger.info('The solution of subproblem is feasible (time limit), u is generated multiplier.')
-                logger.info('The objective value of subproblem (feasible time limit) is %s' % (m1.objVal))
-                result_dict['objval'] = m1.objVal
-                result_dict['u_0'] = dict(m1.getAttr('x', u_0))
-                result_dict['u_1'] = dict(m1.getAttr('x', u_1))
-                result_dict['u_2'] = dict(m1.getAttr('x', u_2))
-                result_dict['u_5'] = dict(m1.getAttr('x', u_5))
-                result_dict['v_hat'] = {
-                    (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][
-                        t - 1] / (
-                                    self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][
-                                t - 1] + self._t_u * y['q'][j, t] *
-                                    self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
-                result_dict['h_1'] = {
-                    (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
-                            result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for
-                    j, t in index_line_period}
-                result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in
-                                          index_line_period}
-                result_dict['status'] = 1
-            else:
-                logger.info('The solution of subproblem is infeasible, generate lambda.')
-                m2 = gp.Model('infeasibleSubProblem')
-                m2.setParam('nonconvex', 2)
-                m2.Params.timeLimit = 200
-                lambda_0 = m2.addVars(index_line_period, name='lambda_0')
-                lambda_1 = m2.addVars(index_line_period, name='lambda_1')
-                lambda_2 = m2.addVars(index_line_period, name='lambda_2')
-                lambda_5 = m2.addVars(index_line_period, name='lambda_5')
-
-                m2.addConstr(
-                    gp.quicksum(
-                        lambda_0[j, t] + lambda_1[j, t] + lambda_2[j, t] + lambda_5[j, t]
-                        for j, t in index_line_period
-                    ) == 1, name='scale_lambda'
-                )
-                m2_obj = gp.quicksum(
-                    lambda_0[j, t] * (
-                            y['q'][j, t] * result_dict['S'][1] - self._eta * (
-                                result_dict['S'][2] - result_dict['S'][1]) * self._peak_point_demand[j - 1][
-                                t - 1])
-                    for j, t in index_line_period
-                )
-                m2_obj = m2_obj + gp.quicksum(
-                    lambda_1[j, t] * (
-                            2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
-                            y['delta'][j, t]
-                            + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
-                            self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
-                            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-                                    1 - y['X'][j, t] * y['delta'][j, t])
-                            - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1] *
-                            y['delta'][j, t]
-                            - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][2]
-                            + y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][2] *
-                            y['delta'][j, t]
-                    )
-                    for j, t in index_line_period
-                )
-                m2_obj = m2_obj + gp.quicksum(
-                    lambda_2[j, t] * (
-                            2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
-                            y['delta'][
-                                j, t]
-                            + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
-                            self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
-                            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-                                    1 - y['X'][j, t] * y['delta'][j, t])
-                            - y['N_hat'][j, t] * result_dict['h_2'][j, t]
-                    )
-                    for j, t in index_line_period
-                )
-                m2_obj = m2_obj + gp.quicksum(
-                    lambda_5[j, t] * (
-                            -result_dict['S'][1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
-                            - result_dict['S'][2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
-                            + 0.05
-                    )
-                    for j, t in index_line_period
-                )
-                m2.addConstr(
-                    gp.quicksum(
-                        lambda_0[j, t] * (
-                                y['q'][j, t] * result_dict['S'][1] - self._eta * (
-                                result_dict['S'][2] - result_dict['S'][1]) * self._peak_point_demand[j - 1][
-                                    t - 1])
-                        for j, t in index_line_period
-                    )
-                    + gp.quicksum(
-                        lambda_1[j, t] * (
-                                2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
-                                y['delta'][j, t]
-                                + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
-                                self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
-                                + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-                                        1 - y['X'][j, t] * y['delta'][j, t])
-                                - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1] *
-                                y['delta'][j, t]
-                                - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][2]
-                                + y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][2] *
-                                y['delta'][j, t]
-                        )
-                        for j, t in index_line_period
-                    )
-                    + gp.quicksum(
-                        lambda_2[j, t] * (
-                                2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
-                                y['delta'][
-                                    j, t]
-                                + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
-                                self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
-                                + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-                                        1 - y['X'][j, t] * y['delta'][j, t])
-                                - y['N_hat'][j, t] * result_dict['h_2'][j, t]
-                        )
-                        for j, t in index_line_period
-                    )
-                    + gp.quicksum(
-                        lambda_5[j, t] * (
-                                -result_dict['S'][1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
-                                - result_dict['S'][2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
-                                + 0.05
-                        )
-                        for j, t in index_line_period
-                    ) >= 1e-4
-                )
-
-                m2.setObjective(m2_obj, gp.GRB.MINIMIZE)
-                m2.update()
-                m2.optimize()
-
-                print(m2.status)
-                result_dict['objval'] = float('inf')
-                result_dict['lambda_0'] = dict(m2.getAttr('x', lambda_0))
-                result_dict['lambda_1'] = dict(m2.getAttr('x', lambda_1))
-                result_dict['lambda_2'] = dict(m2.getAttr('x', lambda_2))
-                result_dict['lambda_5'] = dict(m2.getAttr('x', lambda_5))
-
-                result_dict['v_hat'] = {
-                    (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][
-                        t - 1] / (
-                                    self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][
-                                t - 1] + self._t_u *
-                                    y['q'][j, t] *
-                                    self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
-                result_dict['h_1'] = {
-                    (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
-                            result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
-                    for j, t in index_line_period}
-                # print(result_dict['S'])
-                result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in
-                                          index_line_period}
-
-                result_dict['status'] = 2
-
-                logger.info('Sub Problem status (infeasible): {}'.format(m2.status))
-                logger.info('The objective value of subproblem (time limit) is %s' % (m2.objVal))
-
-            # result_dict['objval'] = m1.objVal
             # result_dict['S'] = dict(m1.getAttr('x', S))
+            # print(result_dict['S'])
             # result_dict['h_2'] = dict(m1.getAttr('x', h_2))
-            # result_dict['N_hat']=dict(m1.getAttr('x',N_hat))
-            # result_dict['N_bar'] = dict(m1.getAttr('x', N_bar))
-            # # result_dict['headway'] = {
-            # #     (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
-            # #             result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for j, t in
-            # #     index_line_period}
-            # result_dict['u_0'] = dict(m1.getAttr('x', u_0))
-            # # result_dict['u_1'] = dict(m1.getAttr('x', u_1))
-            # result_dict['u_1'] = dict(m1.getAttr('x', u_1))
-            # result_dict['u_2']=dict(m1.getAttr('x',u_2))
-            # #result_dict['u_5'] = dict(m1.getAttr('x', u_5))
-            # result_dict['u_6'] = dict(m1.getAttr('x', u_6))
-            # result_dict['u_7'] = dict(m1.getAttr('x', u_7))
-            # #result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
-            # #result_dict['u_4'] = m1.getAttr('x', [u_4])[0]
-            # # logger.info(result_dict['u_3'])
-            # result_dict['v_hat'] = {
-            #     (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] / (
-            #             self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
-            #             y['q'][j, t] *
-            #             self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
-            # result_dict['h_1'] = {
-            #     (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
-            #             result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for j, t in
-            #     index_line_period}
-            # result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in index_line_period}
-            # '''
-            # result_dict['objval'] = m1.objVal
-            # result_dict['S'] = dict(m1.getAttr('x', S))
             # result_dict['u_0'] = dict(m1.getAttr('x', u_0))
             # result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             # result_dict['u_2'] = dict(m1.getAttr('x', u_2))
-            # result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
-            # result_dict['v_hat'] = {
-            #     (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] / (
-            #             self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
-            #             y['q'][j, t] *
-            #             self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
-            # h1_hat = {(j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
-            #                   result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for
-            #           j, t in index_line_period}
-            # '''
-            # # h2_hat = {(j, t): np.sqrt(1 / ((self._v_w * self._demand[j - 1][
-            # #     t - 1] + 2 * self._alpha * self._v_v * self._t_u * y['q'][j, t] * self._speed[j - 1][t - 1] *
-            # #                                 self._demand[j - 1][t - 1] * self._peak_point_demand[j - 1][t - 1] *
-            # #                                 self._average_distance[j - 1] * y['X'][j, t] * y['delta'][j, t] / (
-            # #                                             self._alpha * self._distance[j - 1] *
-            # #                                             self._peak_point_demand[j - 1][t - 1] * self._speed[j - 1][
-            # #                                                 t - 1])) * self._speed[j - 1][t - 1] / (
-            # #                                            2 * self._distance[j - 1] * (self._gammar * (
-            # #                                                1 - (1 - self._alpha) * y['X'][j, t] * y['delta'][
-            # #                                            j, t]) + self._beta * y['delta'][j, t] * result_dict['S'][1] * (
-            # #                                                                                     1 - (1 - self._alpha) *
-            # #                                                                                     y['X'][
-            # #                                                                                         j, t]) + self._beta * (
-            # #                                                                                     1 - y['delta'][j, t]) *
-            # #                                                                         result_dict['S'][2]))))
-            # #           for j, t in index_line_period
-            # #           }
-            # '''
-            # h2_hat=m1.getAttr('x',h_2)
-            # result_dict['headway'] = {key: np.min((h1_hat[key], h2_hat[key])) for key in index_line_period}
-            # result_dict['headway_1']=h1_hat
-            # result_dict['headway_2']=h2_hat
-            # '''
-            # result_dict['status']=1
-        # else:
-        #     m2=gp.Model('infeasibleSubProblem')
-        #     m2.setParam('nonconvex', 2)
-        #     m2.Params.timeLimit = 200
-        #
-        #     m2_S = m2.addVars(range(1, 3), lb=1,ub=100, name='m2_S')
-        #     #m2_obj=m2.addVar(lb=10,name='m2_obj')
-        #     #m2_H=m2.addVars(index_line_period,lb=0.05,ub=0.9,name='m2_H')
-        #     m2_h_2 = m2.addVars(index_line_period,lb=0.05, name='m2_h_2')
-        #     m2_N_hat=m2.addVars(index_line_period,lb=1,ub=100,name='m2_N_hat')
-        #     m2_N_bar=m2.addVars(range(1,3),name='m2_N_bar')
-        #     m2_aux_N_1=m2.addVars(index_line_period,name='m2_aux_N_1')
-        #     m2_aux_N_2=m2.addVars(index_line_period,name='m2_aux_N_2')
-        #     lambda_0 = m2.addVars(index_line_period, name='lambda_0')
-        #     #lambda_1 = m2.addVars(index_line_period, name='lambda_1')
-        #     lambda_1 = m2.addVars(index_line_period, name='lambda_1')
-        #     lambda_2=m2.addVars(index_line_period,name='lambda_2')
-        #     #lambda_5=m2.addVars(index_line_period,name='lambda_5')
-        #     lambda_6 = m2.addVars(range(1,self._period+1), name='lambda_6')
-        #     lambda_7 = m2.addVars(range(1,self._period+1), name='lambda_7')
-        #     #lambda_3 = m2.addVar(name='lambda_3')
-        #     #lambda_4 = m2.addVar(name='lambda_4')
-        #
-        #     m2.addConstr(
-        #         gp.quicksum(
-        #             lambda_0[j, t]+lambda_1[j,t]+ lambda_2[j, t] for j, t in index_line_period
-        #         )
-        #         +gp.quicksum(
-        #             lambda_6[t]+lambda_7[t]
-        #             for t in range(1,self._period+1)
-        #         )== 1,name='scale_lambda')
-        #     m2.addConstrs(((self._v_w * self._demand[j - 1][t - 1] + 2 * self._v_v * self._t_u * self._demand[j - 1][
-        #         t - 1] * self._average_distance[j - 1] / self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] *
-        #                     y['delta'][j, t]) * m2_h_2[j, t] * m2_h_2[j, t]
-        #                    == 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-        #                            self._gammar
-        #                            - self._gammar * (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t]
-        #                            + self._beta * y['delta'][j, t] * m2_S[1]
-        #                            - self._beta * (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t] * m2_S[1]
-        #                            + self._beta * (1 - y['delta'][j, t]) * m2_S[2]
-        #                    )
-        #                    for j, t in index_line_period), name='m2_aux_0'
-        #                   )
-        #     m2.addConstrs(
-        #         (   m2_aux_N_1[j,t]==
-        #             m2_N_hat[j, t] * m2_S[1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1]
-        #             + m2_N_hat[j, t] * m2_S[2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
-        #             for j,t in index_line_period
-        #         ),name='c_m2_aux_N_1'
-        #     )
-        #     m2.addConstrs(
-        #         (
-        #             m2_aux_N_2[j,t]==
-        #             m2_N_hat[j,t]*m2_h_2[j,t]
-        #             for j,t in index_line_period
-        #         ),name='c_m2_aux_N_2'
-        #     )
-        #     # m2.addConstrs(
-        #     #     (y['q'][j, t] * m2_H[j, t] - self._eta * (m2_S[2] - m2_S[1]) <= 0
-        #     #      for j, t in index_line_period), name='in_sub_0')
-        #     # m2.addConstrs(
-        #     #     (y['q'][j, t] * m2_S[1]- self._eta * (m2_S[2] - m2_S[1])*self._peak_point_demand[j-1][t-1] <= 0
-        #     #      for j, t in index_line_period), name='in_sub_0')
-        #     # m2.addConstrs((-y['N_hat'][j, t] * m2_H[j, t]
-        #     #                + 2 * self._distance[j - 1] * y['X'][j, t] * y['delta'][j, t] * (
-        #     #                            self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][
-        #     #                        t - 1] + self._t_u * y['q'][j, t] * self._speed[j - 1][t - 1] * m2_S[1]) / (
-        #     #                            self._speed[j - 1][t - 1] * self._distance[j - 1] *
-        #     #                            self._peak_point_demand[j - 1][t - 1])
-        #     #                + 2 * self._distance[j - 1] * (1 - y['X'][j, t] * y['delta'][j, t]) / self._speed[j - 1][
-        #     #                    t - 1] <= 0
-        #     #                for j, t in index_line_period), name='in_sub_2')
-        #     m2.addConstr(self._eta * (m2_S[1] - m2_S[2]) + 1 <= 0, name='in_sub_3')
-        #     m2.addConstr(self._eta * (m2_S[2] - m2_S[1]) - 6 <= 0, name='in_sub_4')
-        #     m2.addConstrs((-m2_S[1]/self._peak_point_demand[j-1][t-1]+0.05<=0 for j,t in index_line_period),name='in_sub_5_1')
-        #     m2.addConstrs((-m2_S[2] / self._peak_point_demand[j - 1][t - 1] + 0.05 <= 0 for j, t in index_line_period),
-        #                   name='in_sub_5_2')
-        #     m2.addConstrs((
-        #         -m2_N_bar[1]
-        #         +m2_N_hat.prod(y['delta'],"*",t)<=0
-        #         for t in range(1,self._period+1)
-        #     ),name='in_sub_6')
-        #     m2.addConstrs(
-        #         (
-        #             -m2_N_bar[2]
-        #             +sum(m2_N_hat[item1,item2] for item1,item2 in m2_N_hat.keys() if item2==t)
-        #             -m2_N_hat.prod(y['delta'],"*",t)<=0
-        #             for t in range(1,self._period+1)
-        #         ),name='in_sub_7'
-        #     )
-        #     #
-        #     m2_obj = gp.quicksum(
-        #         lambda_0[j, t] * (
-        #                 y['q'][j, t] * m2_S[1] - self._eta * (m2_S[2] - m2_S[1])*self._peak_point_demand[j-1][t-1])
-        #         for j, t in index_line_period
-        #     )
-        #     m2_obj = m2_obj + gp.quicksum(
-        #         lambda_1[j, t] * (
-        #                 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][j, t]
-        #                 +2 * self._t_u * y['X'][j, t] * y['delta'][j,t] * y['q'][j, t] / self._peak_point_demand[j - 1][t - 1] * m2_S[1]
-        #                 +2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-        #                 -m2_aux_N_1[j,t]
-        #         )
-        #         for j, t in index_line_period
-        #     )
-        #     m2_obj = m2_obj + gp.quicksum(
-        #         lambda_2[j, t] * (
-        #                 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
-        #             j, t]
-        #                 + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
-        #                 self._peak_point_demand[j - 1][t - 1] * m2_S[1]
-        #                 + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-        #                 - m2_aux_N_2[j,t]
-        #         )
-        #         for j, t in index_line_period
-        #     )
-        #     # m2_obj=m2_obj+gp.quicksum(
-        #     #     lambda_5[j,t]*(
-        #     #         -m2_S[1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
-        #     #         -m2_S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
-        #     #         +0.05
-        #     #     )
-        #     #     for j,t in index_line_period
-        #     # )
-        #     m2_obj=m2_obj+gp.quicksum(
-        #         lambda_6[t]*(
-        #             -m2_N_bar[1]
-        #             +m2_N_hat.prod(y['delta'],'*',t)
-        #         )
-        #         for t in range(1,self._period+1)
-        #     )
-        #     m2_obj = m2_obj + gp.quicksum(
-        #         lambda_7[t] * (
-        #                 -m2_N_bar[2]
-        #                 +m2_N_hat.sum('*',t)
-        #                 - m2_N_hat.prod(y['delta'], '*', t)
-        #         )
-        #         for t in range(1, self._period + 1)
-        #     )
-        #     #m2_obj = m2_obj + lambda_3 * (self._eta * (m2_S[1] - m2_S[2]) + 1)
-        #     #m2_obj=m2_obj+lambda_4*(self._eta*(m2_S[2]-m2_S[1])-6)
-        #     m2.addConstr(
-        #         gp.quicksum(
-        #             lambda_0[j, t] * (
-        #                     y['q'][j, t] * m2_S[1] - self._eta * (m2_S[2] - m2_S[1]) * self._peak_point_demand[j - 1][
-        #                 t - 1])
-        #             for j, t in index_line_period
-        #         )+
-        #         gp.quicksum(
-        #             lambda_1[j, t] * (
-        #                     2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
-        #                     y['delta'][j, t]
-        #                     + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
-        #                     self._peak_point_demand[j - 1][t - 1] * m2_S[1]
-        #                     + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-        #                                 1 - y['X'][j, t] * y['delta'][j, t])
-        #                     - m2_aux_N_1[j,t]
-        #             )
-        #             for j, t in index_line_period
-        #         )+
-        #         gp.quicksum(
-        #             lambda_2[j, t] * (
-        #                     2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
-        #                     y['delta'][
-        #                         j, t]
-        #                     + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
-        #                     self._peak_point_demand[j - 1][t - 1] * m2_S[1]
-        #                     + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-        #                                 1 - y['X'][j, t] * y['delta'][j, t])
-        #                     - m2_aux_N_2[j,t]
-        #             )
-        #             for j, t in index_line_period
-        #         # )+
-        #         # gp.quicksum(
-        #         #     lambda_5[j, t] * (
-        #         #             -m2_S[1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
-        #         #             - m2_S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
-        #         #             + 0.05
-        #         # )
-        #         # for j, t in index_line_period
-        #     )+gp.quicksum(
-        #             lambda_6[t]*(
-        #                 -m2_N_bar[1]
-        #                 +m2_N_hat.prod(y['delta'],'*',t)
-        #             )
-        #             for t in range(1,self._period+1)
-        #         )+gp.quicksum(
-        #             lambda_7[t]*(
-        #                 -m2_N_bar[2]
-        #                 +m2_N_hat.sum('*',t)
-        #                 -m2_N_hat.prod(y['delta'],'*',t)
-        #             )
-        #             for t in range(1,self._period+1)
-        #         )
-        #     >= 1e-4)
-        #     '''
-        #     m2.addConstrs(((self._v_w * self._demand[j - 1][t - 1] + 2 * self._alpha * self._v_v * self._t_u * y['q'][
-        #         j, t] * self._speed[j - 1][t - 1] * self._demand[j - 1][t - 1] * self._peak_point_demand[j - 1][t - 1] *
-        #                     self._average_distance[j - 1] * y['X'][j, t] * y['delta'][j, t] / (
-        #                                 self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] *
-        #                                 self._speed[j - 1][t - 1])) * m2_h_2[j, t] * m2_h_2[j, t] == (
-        #                                2 * self._distance[j - 1] * (self._gammar * (
-        #                                    1 - (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t]) + self._beta *
-        #                                                             y['delta'][j, t] * (
-        #                                                                         1 - (1 - self._alpha) * y['X'][j, t]) *
-        #                                                             m2_S[1] + self._beta * (1 - y['delta'][j, t]) * m2_S[
-        #                                                                 2])) / self._speed[j - 1][t - 1] for j, t in
-        #                    index_line_period), name='m2_aux_0')
-        #     m2.addConstr(gp.quicksum(lambda_0[j,t]+lambda_1[j,t]+lambda_2[j,t] for j,t in index_line_period)+lambda_3==1,'scale_lambda')
-        #
-        #     m2_obj=gp.quicksum(
-        #         lambda_0[j,t]*(y['q'][j, t] * m2_S[1] - self._eta * (m2_S[2] - m2_S[1]) * self._peak_point_demand[j-1][t-1])
-        #         for j,t in index_line_period
-        #     )
-        #     m2_obj=m2_obj+gp.quicksum(
-        #         lambda_1[j,t]*(2 * self._distance[j - 1] * y['X'][j, t] * y['delta'][j, t] * (
-        #                     self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
-        #                     y['q'][j, t] * self._speed[j - 1][t - 1] * m2_S[1]) / (
-        #                     self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1])
-        #         + 2 * self._distance[j - 1] * (1 - y['X'][j, t] * y['delta'][j, t]) / (
-        #                     self._speed[j - 1][t - 1] )
-        #         - y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] * m2_S[1]*y['N_hat'][j,t]
-        #         - (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] * m2_S[2]*y['N_hat'][j,t])
-        #         for j,t in index_line_period
-        #     )
-        #     m2_obj=m2_obj+gp.quicksum(
-        #         lambda_2[j,t]*(2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*m2_S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
-        #                +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1])
-        #                -m2_h_2[j,t]*y['N_hat'][j,t])
-        #         for j,t in index_line_period
-        #     )
-        #     m2_obj=m2_obj+lambda_3*(self._eta*(m2_S[1]-m2_S[2])+1)
-        #     m2.addConstr(m2_obj>=10)
-        #     '''
-        #     m2.setObjective(m2_obj,gp.GRB.MINIMIZE)
-        #     m2.update()
-        #     m2.optimize()
-        #     print(m2.status)
-        #     result_dict['objval'] = float('inf')
-        #     result_dict['S'] = dict(m2.getAttr('x', m2_S))
-        #     result_dict['h_2']=dict(m2.getAttr('x',m2_h_2))
-        #     result_dict['N_hat']=dict(m2.getAttr('x',m2_N_hat))
-        #     result_dict['N_bar'] = dict(m2.getAttr('x', m2_N_bar))
-        #     #print(result_dict['h_2'])
-        #
-        #     # result_dict['headway'] = {
-        #     #     (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
-        #     #             result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
-        #     #     for j, t in index_line_period}
-        #     result_dict['lambda_0'] = dict(m2.getAttr('x', lambda_0))
-        #     #result_dict['lambda_1'] = dict(m2.getAttr('x', lambda_1))
-        #     result_dict['lambda_1']=dict(m2.getAttr('x',lambda_1))
-        #     result_dict['lambda_2'] = dict(m2.getAttr('x', lambda_2))
-        #     #result_dict['lambda_5'] = dict(m2.getAttr('x', lambda_5))
-        #     result_dict['lambda_6'] = dict(m2.getAttr('x', lambda_6))
-        #     result_dict['lambda_7'] = dict(m2.getAttr('x', lambda_7))
-        #     #result_dict['lambda_3'] = m2.getAttr('x', [lambda_3])[0]
-        #     #result_dict['lambda_4'] = m2.getAttr('x', [lambda_4])[0]
-        #     # logger.info("lambda_0 is \n %s"%(result_dict['lambda_0']))
-        #     # logger.info("lambda_1 is \n %s" % (result_dict['lambda_1']))
-        #     # logger.info("lambda_2 is \n %s" % (result_dict['lambda_2']))
-        #     # logger.info("lambda_3 is \n %s" % (result_dict['lambda_3']))
-        #     #logger.info("lambda is %s"%(gp.quicksum(m2.getAttr('x', lambda_0)[item]+m2.getAttr('x', lambda_1)[item]+m2.getAttr('x', lambda_2)[item] for item in index_line_period)+m2.getAttr('x', [lambda_3])[0]))
-        #     # logger.info(result_dict['u_3'])
-        #
-        #     result_dict['v_hat'] = {
-        #         (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] / (
-        #                 self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
-        #                 y['q'][j, t] *
-        #                 self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
-        #     result_dict['h_1'] = {
-        #         (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
-        #                 result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for j, t in
-        #         index_line_period}
-        #     #print(result_dict['S'])
-        #     result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in index_line_period}
-        #     '''
-        #     result_dict['v_hat'] = {
-        #         (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] / (
-        #                 self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
-        #                 y['q'][j, t] *
-        #                 self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
-        #     '''
-        #     '''
-        #     h1_hat = {(j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
-        #                       result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for
-        #               j, t in index_line_period}
-        #     h2_hat = m2.getAttr('x', m2_h_2)
-        #     result_dict['headway'] = {key: np.min((h1_hat[key], h2_hat[key])) for key in index_line_period}
-        #     result_dict['headway_1'] = h1_hat
-        #     result_dict['headway_2'] = h2_hat
-        #     '''
-        #     '''
-        #     result_dict['headway_2']= dict(m2.getAttr('x', m2_h_2))
-        #     '''
-        #     result_dict['status'] = 2
-        #
-        #     logger.info('Sub Problem status (infeasible): {}'.format(m2.status))
-        #     logger.info('The objective value of subproblem is %s' % (m2.objVal))
+            # result_dict['u_5'] = dict(m1.getAttr('x', u_5))
+            # check_feasible=0
+            # for j,t in index_line_period:
+            #     if y['q'][j,t]*result_dict['S'][1]-self._eta*(result_dict['S'][2]-result_dict['S'][1])*self._peak_point_demand[j-1][t-1]>0:
+            #         check_feasible+=1
+            #     if (2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
+            #     j, t]
+            #         + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] / self._peak_point_demand[j - 1][
+            #             t - 1] * result_dict['S'][1]
+            #         + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+            #         - y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]*result_dict['S'][1]
+            #         -y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][2]
+            #         +y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]*result_dict['S'][2])>0:
+            #         check_feasible+=1
+            #     if (2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
+            #     j, t]
+            #         + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] / self._peak_point_demand[j - 1][
+            #             t - 1] * result_dict['S'][1]
+            #         + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+            #         - y['N_hat'][j,t]*result_dict['h_2'][j,t])>0:
+            #         check_feasible+=1
+            #     if (-result_dict['S'][1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
+            #         - result_dict['S'][2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
+            #         + 0.05)>0:
+            #         check_feasible+=1
+            # print(check_feasible)
+            # if check_feasible==0:
+            #     logger.info('The solution of subproblem is feasible, u is generated multiplier.')
+            #     logger.info('The objective value of subproblem (feasible) is %s' % (m1.objVal))
+            #     result_dict['objval'] = m1.objVal
+            #     result_dict['u_0'] = dict(m1.getAttr('x', u_0))
+            #     result_dict['u_1'] = dict(m1.getAttr('x', u_1))
+            #     result_dict['u_2'] = dict(m1.getAttr('x', u_2))
+            #     result_dict['u_5'] = dict(m1.getAttr('x', u_5))
+            #     result_dict['v_hat'] = {
+            #         (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][
+            #             t - 1] / (
+            #                         self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][
+            #                     t - 1] + self._t_u * y['q'][j, t] *
+            #                         self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
+            #     result_dict['h_1'] = {
+            #         (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
+            #                 result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for
+            #         j, t in index_line_period}
+            #     result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in
+            #                               index_line_period}
+            #     result_dict['status'] = 1
+            # else:
+            #     logger.info('The solution of subproblem is infeasible, generate lambda.')
+            #     m2 = gp.Model('infeasibleSubProblem')
+            #     m2.setParam('nonconvex', 2)
+            #     m2.Params.timeLimit = 200
+            #     lambda_0 = m2.addVars(index_line_period, name='lambda_0')
+            #     lambda_1 = m2.addVars(index_line_period, name='lambda_1')
+            #     lambda_2 = m2.addVars(index_line_period, name='lambda_2')
+            #     lambda_5=m2.addVars(index_line_period,name='lambda_5')
+            #
+            #     m2.addConstr(
+            #         gp.quicksum(
+            #             lambda_0[j,t]+lambda_1[j,t]+lambda_2[j,t]+lambda_5[j,t]
+            #             for j,t in index_line_period
+            #         )==1,name='scale_lambda'
+            #     )
+            #     m2_obj = gp.quicksum(
+            #         lambda_0[j, t] * (
+            #                 y['q'][j, t] * result_dict['S'][1] - self._eta * (result_dict['S'][2] - result_dict['S'][1]) * self._peak_point_demand[j - 1][
+            #             t - 1])
+            #         for j, t in index_line_period
+            #     )
+            #     m2_obj = m2_obj + gp.quicksum(
+            #         lambda_1[j, t] * (
+            #                 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+            #                 y['delta'][j, t]
+            #                 + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
+            #                 self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
+            #                 + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+            #                             1 - y['X'][j, t] * y['delta'][j, t])
+            #                 - y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][1]*y['delta'][j,t]
+            #                 -y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][2]
+            #                 +y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][2]*y['delta'][j,t]
+            #         )
+            #         for j, t in index_line_period
+            #     )
+            #     m2_obj = m2_obj + gp.quicksum(
+            #         lambda_2[j, t] * (
+            #                 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+            #                 y['delta'][
+            #                     j, t]
+            #                 + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
+            #                 self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
+            #                 + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+            #                             1 - y['X'][j, t] * y['delta'][j, t])
+            #                 - y['N_hat'][j,t]*result_dict['h_2'][j,t]
+            #         )
+            #         for j, t in index_line_period
+            #     )
+            #     m2_obj=m2_obj+gp.quicksum(
+            #         lambda_5[j,t]*(
+            #             -result_dict['S'][1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
+            #             -result_dict['S'][2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
+            #             +0.05
+            #         )
+            #         for j,t in index_line_period
+            #     )
+            #     m2.addConstr(
+            #         gp.quicksum(
+            #             lambda_0[j, t] * (
+            #                     y['q'][j, t] * result_dict['S'][1] - self._eta * (
+            #                         result_dict['S'][2] - result_dict['S'][1]) * self._peak_point_demand[j - 1][
+            #                         t - 1])
+            #             for j, t in index_line_period
+            #         )
+            #         +gp.quicksum(
+            #         lambda_1[j, t] * (
+            #                 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+            #                 y['delta'][j, t]
+            #                 + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
+            #                 self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
+            #                 + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+            #                             1 - y['X'][j, t] * y['delta'][j, t])
+            #                 - y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][1]*y['delta'][j,t]
+            #                 -y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][2]
+            #                 +y['N_hat'][j,t]/self._peak_point_demand[j-1][t-1]*result_dict['S'][2]*y['delta'][j,t]
+            #         )
+            #         for j, t in index_line_period
+            #     )
+            #     +gp.quicksum(
+            #         lambda_2[j, t] * (
+            #                 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+            #                 y['delta'][
+            #                     j, t]
+            #                 + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
+            #                 self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
+            #                 + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+            #                             1 - y['X'][j, t] * y['delta'][j, t])
+            #                 - y['N_hat'][j,t]*result_dict['h_2'][j,t]
+            #         )
+            #         for j, t in index_line_period
+            #     )
+            #     +gp.quicksum(
+            #         lambda_5[j,t]*(
+            #             -result_dict['S'][1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
+            #             -result_dict['S'][2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
+            #             +0.05
+            #         )
+            #         for j,t in index_line_period
+            #     )>=1e-4
+            #     )
+            #
+            #     m2.setObjective(m2_obj, gp.GRB.MINIMIZE)
+            #     m2.update()
+            #     m2.optimize()
+            #
+            #     print(m2.status)
+            #     result_dict['objval'] = float('inf')
+            #     result_dict['lambda_0'] = dict(m2.getAttr('x', lambda_0))
+            #     result_dict['lambda_1'] = dict(m2.getAttr('x', lambda_1))
+            #     result_dict['lambda_2'] = dict(m2.getAttr('x', lambda_2))
+            #     result_dict['lambda_5'] = dict(m2.getAttr('x', lambda_5))
+            #
+            #     result_dict['v_hat'] = {
+            #         (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][
+            #             t - 1] / (
+            #                         self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][
+            #                     t - 1] + self._t_u *
+            #                         y['q'][j, t] *
+            #                         self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
+            #     result_dict['h_1'] = {
+            #         (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
+            #                 result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
+            #         for j, t in index_line_period}
+            #     # print(result_dict['S'])
+            #     result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in
+            #                               index_line_period}
+            #
+            #     result_dict['status'] = 2
+            #
+            #     logger.info('Sub Problem status (infeasible): {}'.format(m2.status))
+            #     logger.info('The objective value of subproblem is %s' % (m2.objVal))
+            logger.info('The objective value of subproblem is %s'%(m1.objVal))
+            result_dict['objval']=m1.objVal
+            result_dict['S']=dict(m1.getAttr('x',S))
+            result_dict['h_2']=dict(m1.getAttr('x',h_2))
+            #result_dict['headway']={(j,t):result_dict['S'][1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]+result_dict['S'][2]*(1-y['delta'][j,t])/self._peak_point_demand[j-1][t-1] for j,t in index_line_period}
+            result_dict['u_0']=dict(m1.getAttr('x',u_0))
+            #result_dict['u_1'] = dict(m1.getAttr('x', u_1))
+            result_dict['u_1'] = dict(m1.getAttr('x', u_1))
+            result_dict['u_2']=dict(m1.getAttr('x',u_2))
+            result_dict['u_5'] = dict(m1.getAttr('x', u_5))
+            #result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
+            #result_dict['u_4'] = m1.getAttr('x', [u_4])[0]
+            #logger.info(result_dict['u_3'])
+            result_dict['v_hat']={(j,t):self._speed[j-1][t-1] * self._distance[j-1] * self._peak_point_demand[j-1][t-1] / (
+                        self._alpha * self._distance[j-1] * self._peak_point_demand[j-1][t-1] + self._t_u * y['q'][j, t] *
+                        self._speed[j-1][t-1] * result_dict['S'][1]) for j,t in index_line_period}
+            result_dict['h_1']={(j,t):result_dict['S'][1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]+result_dict['S'][2]*(1-y['delta'][j,t])/self._peak_point_demand[j-1][t-1] for j,t in index_line_period}
+            result_dict['headway']={key:np.min((result_dict['h_1'][key],result_dict['h_2'][key])) for key in index_line_period}
+            # h2_hat={(j,t):np.sqrt(1/((self._v_w*self._demand[j-1][t-1]+2*self._alpha*self._v_v*self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*self._demand[j-1][t-1]*self._peak_point_demand[j-1][t-1]*self._average_distance[j-1]*y['X'][j,t]*y['delta'][j,t]/(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]*self._speed[j-1][t-1]))*self._speed[j-1][t-1]/(2*self._distance[j-1]*(self._gammar*(1-(1-self._alpha)*y['X'][j,t]*y['delta'][j,t])+self._beta*y['delta'][j,t]*result_dict['S'][1]*(1-(1-self._alpha)*y['X'][j,t])+self._beta*(1-y['delta'][j,t])*result_dict['S'][2]))))
+            #     for j,t in index_line_period
+            #         }
+            # result_dict['headway']={key:np.min((h1_hat[key],h2_hat[key])) for key in index_line_period}
+            # result_dict['headway_1'] = h1_hat
+            # result_dict['headway_2'] = h2_hat
+            result_dict['status']=1
+        elif m1.status == GRB.TIME_LIMIT:
+            # result_dict['S'] = dict(m1.getAttr('x', S))
+            # result_dict['h_2'] = dict(m1.getAttr('x', h_2))
+            # check_feasible = 0
+            # for j, t in index_line_period:
+            #     if y['q'][j, t] * result_dict['S'][1] - self._eta * (result_dict['S'][2] - result_dict['S'][1]) * \
+            #             self._peak_point_demand[j - 1][t - 1] > 0:
+            #         check_feasible += 1
+            #     if (2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
+            #         j, t]
+            #         + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] / self._peak_point_demand[j - 1][
+            #             t - 1] * result_dict['S'][1]
+            #         + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+            #         - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t] * result_dict['S'][1]
+            #         - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][2]
+            #         + y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t] * result_dict['S'][
+            #             2]) > 0:
+            #         check_feasible += 1
+            #     if (2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
+            #         j, t]
+            #         + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] / self._peak_point_demand[j - 1][
+            #             t - 1] * result_dict['S'][1]
+            #         + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+            #         - y['N_hat'][j, t] * result_dict['h_2'][j, t]) > 0:
+            #         check_feasible += 1
+            #     if (-result_dict['S'][1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
+            #         - result_dict['S'][2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
+            #         + 0.05) > 0:
+            #         check_feasible += 1
+            # if check_feasible == 0:
+            #     logger.info('The solution of subproblem is feasible (time limit), u is generated multiplier.')
+            #     logger.info('The objective value of subproblem (feasible time limit) is %s' % (m1.objVal))
+            #     result_dict['objval'] = m1.objVal
+            #     result_dict['u_0'] = dict(m1.getAttr('x', u_0))
+            #     result_dict['u_1'] = dict(m1.getAttr('x', u_1))
+            #     result_dict['u_2'] = dict(m1.getAttr('x', u_2))
+            #     result_dict['u_5'] = dict(m1.getAttr('x', u_5))
+            #     result_dict['v_hat'] = {
+            #         (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][
+            #             t - 1] / (
+            #                         self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][
+            #                     t - 1] + self._t_u * y['q'][j, t] *
+            #                         self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
+            #     result_dict['h_1'] = {
+            #         (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
+            #                 result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for
+            #         j, t in index_line_period}
+            #     result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in
+            #                               index_line_period}
+            #     result_dict['status'] = 1
+            # else:
+            #     logger.info('The solution of subproblem is infeasible, generate lambda.')
+            #     m2 = gp.Model('infeasibleSubProblem')
+            #     m2.setParam('nonconvex', 2)
+            #     m2.Params.timeLimit = 200
+            #     lambda_0 = m2.addVars(index_line_period, name='lambda_0')
+            #     lambda_1 = m2.addVars(index_line_period, name='lambda_1')
+            #     lambda_2 = m2.addVars(index_line_period, name='lambda_2')
+            #     lambda_5 = m2.addVars(index_line_period, name='lambda_5')
+            #
+            #     m2.addConstr(
+            #         gp.quicksum(
+            #             lambda_0[j, t] + lambda_1[j, t] + lambda_2[j, t] + lambda_5[j, t]
+            #             for j, t in index_line_period
+            #         ) == 1, name='scale_lambda'
+            #     )
+            #     m2_obj = gp.quicksum(
+            #         lambda_0[j, t] * (
+            #                 y['q'][j, t] * result_dict['S'][1] - self._eta * (
+            #                     result_dict['S'][2] - result_dict['S'][1]) * self._peak_point_demand[j - 1][
+            #                     t - 1])
+            #         for j, t in index_line_period
+            #     )
+            #     m2_obj = m2_obj + gp.quicksum(
+            #         lambda_1[j, t] * (
+            #                 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+            #                 y['delta'][j, t]
+            #                 + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
+            #                 self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
+            #                 + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+            #                         1 - y['X'][j, t] * y['delta'][j, t])
+            #                 - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1] *
+            #                 y['delta'][j, t]
+            #                 - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][2]
+            #                 + y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][2] *
+            #                 y['delta'][j, t]
+            #         )
+            #         for j, t in index_line_period
+            #     )
+            #     m2_obj = m2_obj + gp.quicksum(
+            #         lambda_2[j, t] * (
+            #                 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+            #                 y['delta'][
+            #                     j, t]
+            #                 + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
+            #                 self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
+            #                 + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+            #                         1 - y['X'][j, t] * y['delta'][j, t])
+            #                 - y['N_hat'][j, t] * result_dict['h_2'][j, t]
+            #         )
+            #         for j, t in index_line_period
+            #     )
+            #     m2_obj = m2_obj + gp.quicksum(
+            #         lambda_5[j, t] * (
+            #                 -result_dict['S'][1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
+            #                 - result_dict['S'][2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
+            #                 + 0.05
+            #         )
+            #         for j, t in index_line_period
+            #     )
+            #     m2.addConstr(
+            #         gp.quicksum(
+            #             lambda_0[j, t] * (
+            #                     y['q'][j, t] * result_dict['S'][1] - self._eta * (
+            #                     result_dict['S'][2] - result_dict['S'][1]) * self._peak_point_demand[j - 1][
+            #                         t - 1])
+            #             for j, t in index_line_period
+            #         )
+            #         + gp.quicksum(
+            #             lambda_1[j, t] * (
+            #                     2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+            #                     y['delta'][j, t]
+            #                     + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
+            #                     self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
+            #                     + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+            #                             1 - y['X'][j, t] * y['delta'][j, t])
+            #                     - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1] *
+            #                     y['delta'][j, t]
+            #                     - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][2]
+            #                     + y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * result_dict['S'][2] *
+            #                     y['delta'][j, t]
+            #             )
+            #             for j, t in index_line_period
+            #         )
+            #         + gp.quicksum(
+            #             lambda_2[j, t] * (
+            #                     2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+            #                     y['delta'][
+            #                         j, t]
+            #                     + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
+            #                     self._peak_point_demand[j - 1][t - 1] * result_dict['S'][1]
+            #                     + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+            #                             1 - y['X'][j, t] * y['delta'][j, t])
+            #                     - y['N_hat'][j, t] * result_dict['h_2'][j, t]
+            #             )
+            #             for j, t in index_line_period
+            #         )
+            #         + gp.quicksum(
+            #             lambda_5[j, t] * (
+            #                     -result_dict['S'][1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
+            #                     - result_dict['S'][2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
+            #                     + 0.05
+            #             )
+            #             for j, t in index_line_period
+            #         ) >= 1e-4
+            #     )
+            #
+            #     m2.setObjective(m2_obj, gp.GRB.MINIMIZE)
+            #     m2.update()
+            #     m2.optimize()
+            #
+            #     print(m2.status)
+            #     result_dict['objval'] = float('inf')
+            #     result_dict['lambda_0'] = dict(m2.getAttr('x', lambda_0))
+            #     result_dict['lambda_1'] = dict(m2.getAttr('x', lambda_1))
+            #     result_dict['lambda_2'] = dict(m2.getAttr('x', lambda_2))
+            #     result_dict['lambda_5'] = dict(m2.getAttr('x', lambda_5))
+            #
+            #     result_dict['v_hat'] = {
+            #         (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][
+            #             t - 1] / (
+            #                         self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][
+            #                     t - 1] + self._t_u *
+            #                         y['q'][j, t] *
+            #                         self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
+            #     result_dict['h_1'] = {
+            #         (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
+            #                 result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
+            #         for j, t in index_line_period}
+            #     # print(result_dict['S'])
+            #     result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in
+            #                               index_line_period}
+            #
+            #     result_dict['status'] = 2
+            #
+            #     logger.info('Sub Problem status (infeasible): {}'.format(m2.status))
+            #     logger.info('The objective value of subproblem (time limit) is %s' % (m2.objVal))
+
+            result_dict['objval'] = m1.objVal
+            result_dict['S'] = dict(m1.getAttr('x', S))
+            result_dict['h_2'] = dict(m1.getAttr('x', h_2))
+            #result_dict['N_hat']=dict(m1.getAttr('x',N_hat))
+            #result_dict['N_bar'] = dict(m1.getAttr('x', N_bar))
+            # result_dict['headway'] = {
+            #     (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
+            #             result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for j, t in
+            #     index_line_period}
+            result_dict['u_0'] = dict(m1.getAttr('x', u_0))
+            # result_dict['u_1'] = dict(m1.getAttr('x', u_1))
+            result_dict['u_1'] = dict(m1.getAttr('x', u_1))
+            result_dict['u_2']=dict(m1.getAttr('x',u_2))
+            result_dict['u_5'] = dict(m1.getAttr('x', u_5))
+            #result_dict['u_6'] = dict(m1.getAttr('x', u_6))
+            #result_dict['u_7'] = dict(m1.getAttr('x', u_7))
+            #result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
+            #result_dict['u_4'] = m1.getAttr('x', [u_4])[0]
+            # logger.info(result_dict['u_3'])
+            result_dict['v_hat'] = {
+                (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] / (
+                        self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
+                        y['q'][j, t] *
+                        self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
+            result_dict['h_1'] = {
+                (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
+                        result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for j, t in
+                index_line_period}
+            result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in index_line_period}
+            '''
+            result_dict['objval'] = m1.objVal
+            result_dict['S'] = dict(m1.getAttr('x', S))
+            result_dict['u_0'] = dict(m1.getAttr('x', u_0))
+            result_dict['u_1'] = dict(m1.getAttr('x', u_1))
+            result_dict['u_2'] = dict(m1.getAttr('x', u_2))
+            result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
+            result_dict['v_hat'] = {
+                (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] / (
+                        self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
+                        y['q'][j, t] *
+                        self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
+            h1_hat = {(j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
+                              result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for
+                      j, t in index_line_period}
+            '''
+            # h2_hat = {(j, t): np.sqrt(1 / ((self._v_w * self._demand[j - 1][
+            #     t - 1] + 2 * self._alpha * self._v_v * self._t_u * y['q'][j, t] * self._speed[j - 1][t - 1] *
+            #                                 self._demand[j - 1][t - 1] * self._peak_point_demand[j - 1][t - 1] *
+            #                                 self._average_distance[j - 1] * y['X'][j, t] * y['delta'][j, t] / (
+            #                                             self._alpha * self._distance[j - 1] *
+            #                                             self._peak_point_demand[j - 1][t - 1] * self._speed[j - 1][
+            #                                                 t - 1])) * self._speed[j - 1][t - 1] / (
+            #                                            2 * self._distance[j - 1] * (self._gammar * (
+            #                                                1 - (1 - self._alpha) * y['X'][j, t] * y['delta'][
+            #                                            j, t]) + self._beta * y['delta'][j, t] * result_dict['S'][1] * (
+            #                                                                                     1 - (1 - self._alpha) *
+            #                                                                                     y['X'][
+            #                                                                                         j, t]) + self._beta * (
+            #                                                                                     1 - y['delta'][j, t]) *
+            #                                                                         result_dict['S'][2]))))
+            #           for j, t in index_line_period
+            #           }
+            '''
+            h2_hat=m1.getAttr('x',h_2)
+            result_dict['headway'] = {key: np.min((h1_hat[key], h2_hat[key])) for key in index_line_period}
+            result_dict['headway_1']=h1_hat
+            result_dict['headway_2']=h2_hat
+            '''
+            result_dict['status']=1
+        else:
+            logger.info('The solution of subproblem is infeasible, generate lambda.')
+            m2=gp.Model('infeasibleSubProblem')
+            m2.setParam('nonconvex', 2)
+            m2.Params.timeLimit = 200
+
+            m2_S = m2.addVars(range(1, 3), lb=1,ub=200, name='m2_S')
+            #m2_obj=m2.addVar(lb=10,name='m2_obj')
+            #m2_H=m2.addVars(index_line_period,lb=0.05,ub=0.9,name='m2_H')
+            m2_h_2 = m2.addVars(index_line_period,lb=0.05, name='m2_h_2')
+            #m2_N_hat=m2.addVars(index_line_period,lb=1,ub=100,name='m2_N_hat')
+            #m2_N_bar=m2.addVars(range(1,3),name='m2_N_bar')
+            #m2_aux_N_1=m2.addVars(index_line_period,name='m2_aux_N_1')
+            #m2_aux_N_2=m2.addVars(index_line_period,name='m2_aux_N_2')
+            lambda_0 = m2.addVars(index_line_period, name='lambda_0')
+            #lambda_1 = m2.addVars(index_line_period, name='lambda_1')
+            lambda_1 = m2.addVars(index_line_period, name='lambda_1')
+            lambda_2=m2.addVars(index_line_period,name='lambda_2')
+            lambda_5=m2.addVars(index_line_period,name='lambda_5')
+            #lambda_6 = m2.addVars(range(1,self._period+1), name='lambda_6')
+            #lambda_7 = m2.addVars(range(1,self._period+1), name='lambda_7')
+            #lambda_3 = m2.addVar(name='lambda_3')
+            #lambda_4 = m2.addVar(name='lambda_4')
+
+            m2.addConstr(
+                gp.quicksum(
+                    lambda_0[j, t]+lambda_1[j,t]+ lambda_2[j, t]+lambda_5 for j, t in index_line_period
+                )== 1,name='scale_lambda')
+            m2.addConstrs(((self._v_w * self._demand[j - 1][t - 1] + 2 * self._v_v * self._t_u * self._demand[j - 1][
+                t - 1] * self._average_distance[j - 1] / self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] *
+                            y['delta'][j, t]) * m2_h_2[j, t] * m2_h_2[j, t]
+                           == 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+                                   self._gammar
+                                   - self._gammar * (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t]
+                                   + self._beta * y['delta'][j, t] * m2_S[1]
+                                   - self._beta * (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t] * m2_S[1]
+                                   + self._beta * (1 - y['delta'][j, t]) * m2_S[2]
+                           )
+                           for j, t in index_line_period), name='m2_aux_0'
+                          )
+            # m2.addConstrs(
+            #     (   m2_aux_N_1[j,t]==
+            #         m2_N_hat[j, t] * m2_S[1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1]
+            #         + m2_N_hat[j, t] * m2_S[2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
+            #         for j,t in index_line_period
+            #     ),name='c_m2_aux_N_1'
+            # )
+            # m2.addConstrs(
+            #     (
+            #         m2_aux_N_2[j,t]==
+            #         m2_N_hat[j,t]*m2_h_2[j,t]
+            #         for j,t in index_line_period
+            #     ),name='c_m2_aux_N_2'
+            # )
+            # m2.addConstrs(
+            #     (y['q'][j, t] * m2_H[j, t] - self._eta * (m2_S[2] - m2_S[1]) <= 0
+            #      for j, t in index_line_period), name='in_sub_0')
+            # m2.addConstrs(
+            #     (y['q'][j, t] * m2_S[1]- self._eta * (m2_S[2] - m2_S[1])*self._peak_point_demand[j-1][t-1] <= 0
+            #      for j, t in index_line_period), name='in_sub_0')
+            # m2.addConstrs((-y['N_hat'][j, t] * m2_H[j, t]
+            #                + 2 * self._distance[j - 1] * y['X'][j, t] * y['delta'][j, t] * (
+            #                            self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][
+            #                        t - 1] + self._t_u * y['q'][j, t] * self._speed[j - 1][t - 1] * m2_S[1]) / (
+            #                            self._speed[j - 1][t - 1] * self._distance[j - 1] *
+            #                            self._peak_point_demand[j - 1][t - 1])
+            #                + 2 * self._distance[j - 1] * (1 - y['X'][j, t] * y['delta'][j, t]) / self._speed[j - 1][
+            #                    t - 1] <= 0
+            #                for j, t in index_line_period), name='in_sub_2')
+            m2.addConstr(self._eta * (m2_S[1] - m2_S[2]) + 1 <= 0, name='in_sub_3')
+            m2.addConstr(self._eta * (m2_S[2] - m2_S[1]) - 6 <= 0, name='in_sub_4')
+            # m2.addConstrs((-m2_S[1]/self._peak_point_demand[j-1][t-1]+0.05<=0 for j,t in index_line_period),name='in_sub_5_1')
+            # m2.addConstrs((-m2_S[2] / self._peak_point_demand[j - 1][t - 1] + 0.05 <= 0 for j, t in index_line_period),
+            #               name='in_sub_5_2')
+            m2.addConstrs(
+                (
+                    -m2_S[1]/self._peak_point_demand[j-1][t-1]
+                    -m2_S[2]/self._peak_point_demand[j-1][t-1]
+                    +0.05<=0
+                    for j,t in index_line_period
+                ),name='in_sub_5'
+            )
+            # m2.addConstrs((
+            #     -m2_N_bar[1]
+            #     +m2_N_hat.prod(y['delta'],"*",t)<=0
+            #     for t in range(1,self._period+1)
+            # ),name='in_sub_6')
+            # m2.addConstrs(
+            #     (
+            #         -m2_N_bar[2]
+            #         +sum(m2_N_hat[item1,item2] for item1,item2 in m2_N_hat.keys() if item2==t)
+            #         -m2_N_hat.prod(y['delta'],"*",t)<=0
+            #         for t in range(1,self._period+1)
+            #     ),name='in_sub_7'
+            # )
+            #
+            m2_obj = gp.quicksum(
+                lambda_0[j, t] * (
+                        y['q'][j, t] * m2_S[1] - self._eta * (m2_S[2] - m2_S[1])*self._peak_point_demand[j-1][t-1])
+                for j, t in index_line_period
+            )
+            m2_obj = m2_obj + gp.quicksum(
+                lambda_1[j, t] * (
+                        2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][j, t]
+                        +2 * self._t_u * y['X'][j, t] * y['delta'][j,t] * y['q'][j, t] / self._peak_point_demand[j - 1][t - 1] * m2_S[1]
+                        +2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+                        -y['N_hat'][j,t]*m2_S[1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
+                        -y['N_hat'][j,t]*m2_S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
+                        #-m2_aux_N_1[j,t]
+                )
+                for j, t in index_line_period
+            )
+            m2_obj = m2_obj + gp.quicksum(
+                lambda_2[j, t] * (
+                        2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
+                    j, t]
+                        + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
+                        self._peak_point_demand[j - 1][t - 1] * m2_S[1]
+                        + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+                        - y['N_hat'][j,t]*m2_h_2[j,t]
+                )
+                for j, t in index_line_period
+            )
+            m2_obj=m2_obj+gp.quicksum(
+                lambda_5[j,t]*(
+                    -m2_S[1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
+                    -m2_S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
+                    +0.05
+                )
+                for j,t in index_line_period
+            )
+            # m2_obj=m2_obj+gp.quicksum(
+            #     lambda_6[t]*(
+            #         -m2_N_bar[1]
+            #         +m2_N_hat.prod(y['delta'],'*',t)
+            #     )
+            #     for t in range(1,self._period+1)
+            # )
+            # m2_obj = m2_obj + gp.quicksum(
+            #     lambda_7[t] * (
+            #             -m2_N_bar[2]
+            #             +m2_N_hat.sum('*',t)
+            #             - m2_N_hat.prod(y['delta'], '*', t)
+            #     )
+            #     for t in range(1, self._period + 1)
+            # )
+            #m2_obj = m2_obj + lambda_3 * (self._eta * (m2_S[1] - m2_S[2]) + 1)
+            #m2_obj=m2_obj+lambda_4*(self._eta*(m2_S[2]-m2_S[1])-6)
+            m2.addConstr(
+                gp.quicksum(
+                    lambda_0[j, t] * (
+                            y['q'][j, t] * m2_S[1] - self._eta * (
+                            m2_S[2] - m2_S[1]) * self._peak_point_demand[j - 1][
+                                t - 1])
+                    for j, t in index_line_period
+                )
+                + gp.quicksum(
+                    lambda_1[j, t] * (
+                            2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+                            y['delta'][j, t]
+                            + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
+                            self._peak_point_demand[j - 1][t - 1] * m2_S[1]
+                            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+                                    1 - y['X'][j, t] * y['delta'][j, t])
+                            - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * m2_S[1] *
+                            y['delta'][j, t]
+                            - y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * m2_S[2]
+                            + y['N_hat'][j, t] / self._peak_point_demand[j - 1][t - 1] * m2_S[2] *
+                            y['delta'][j, t]
+                    )
+                    for j, t in index_line_period
+                )
+                + gp.quicksum(
+                    lambda_2[j, t] * (
+                            2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+                            y['delta'][
+                                j, t]
+                            + 2 * self._t_u * y['X'][j, t] * y['delta'][j, t] * y['q'][j, t] /
+                            self._peak_point_demand[j - 1][t - 1] * m2_S[1]
+                            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+                                    1 - y['X'][j, t] * y['delta'][j, t])
+                            - y['N_hat'][j, t] * m2_h_2[j,t]
+                    )
+                    for j, t in index_line_period
+                )
+                + gp.quicksum(
+                    lambda_5[j, t] * (
+                            -m2_S[1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
+                            -m2_S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
+                            + 0.05
+                    )
+                    for j, t in index_line_period
+                ) >= 1e-4
+            )
+            '''
+            m2.addConstrs(((self._v_w * self._demand[j - 1][t - 1] + 2 * self._alpha * self._v_v * self._t_u * y['q'][
+                j, t] * self._speed[j - 1][t - 1] * self._demand[j - 1][t - 1] * self._peak_point_demand[j - 1][t - 1] *
+                            self._average_distance[j - 1] * y['X'][j, t] * y['delta'][j, t] / (
+                                        self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] *
+                                        self._speed[j - 1][t - 1])) * m2_h_2[j, t] * m2_h_2[j, t] == (
+                                       2 * self._distance[j - 1] * (self._gammar * (
+                                           1 - (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t]) + self._beta *
+                                                                    y['delta'][j, t] * (
+                                                                                1 - (1 - self._alpha) * y['X'][j, t]) *
+                                                                    m2_S[1] + self._beta * (1 - y['delta'][j, t]) * m2_S[
+                                                                        2])) / self._speed[j - 1][t - 1] for j, t in
+                           index_line_period), name='m2_aux_0')
+            m2.addConstr(gp.quicksum(lambda_0[j,t]+lambda_1[j,t]+lambda_2[j,t] for j,t in index_line_period)+lambda_3==1,'scale_lambda')
+
+            m2_obj=gp.quicksum(
+                lambda_0[j,t]*(y['q'][j, t] * m2_S[1] - self._eta * (m2_S[2] - m2_S[1]) * self._peak_point_demand[j-1][t-1])
+                for j,t in index_line_period
+            )
+            m2_obj=m2_obj+gp.quicksum(
+                lambda_1[j,t]*(2 * self._distance[j - 1] * y['X'][j, t] * y['delta'][j, t] * (
+                            self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
+                            y['q'][j, t] * self._speed[j - 1][t - 1] * m2_S[1]) / (
+                            self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1])
+                + 2 * self._distance[j - 1] * (1 - y['X'][j, t] * y['delta'][j, t]) / (
+                            self._speed[j - 1][t - 1] )
+                - y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] * m2_S[1]*y['N_hat'][j,t]
+                - (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] * m2_S[2]*y['N_hat'][j,t])
+                for j,t in index_line_period
+            )
+            m2_obj=m2_obj+gp.quicksum(
+                lambda_2[j,t]*(2*self._distance[j-1]*y['X'][j,t]*y['delta'][j,t]*(self._alpha*self._distance[j-1]*self._peak_point_demand[j-1][t-1]+self._t_u*y['q'][j,t]*self._speed[j-1][t-1]*m2_S[1])/(self._speed[j-1][t-1]*self._distance[j-1]*self._peak_point_demand[j-1][t-1])
+                       +2*self._distance[j-1]*(1-y['X'][j,t]*y['delta'][j,t])/(self._speed[j-1][t-1])
+                       -m2_h_2[j,t]*y['N_hat'][j,t])
+                for j,t in index_line_period
+            )
+            m2_obj=m2_obj+lambda_3*(self._eta*(m2_S[1]-m2_S[2])+1)
+            m2.addConstr(m2_obj>=10)
+            '''
+            m2.setObjective(m2_obj,gp.GRB.MINIMIZE)
+            m2.update()
+            m2.optimize()
+            print(m2.status)
+            result_dict['objval'] = float('inf')
+            result_dict['S'] = dict(m2.getAttr('x', m2_S))
+            result_dict['h_2']=dict(m2.getAttr('x',m2_h_2))
+            # result_dict['N_hat']=dict(m2.getAttr('x',m2_N_hat))
+            # result_dict['N_bar'] = dict(m2.getAttr('x', m2_N_bar))
+            #print(result_dict['h_2'])
+
+            # result_dict['headway'] = {
+            #     (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
+            #             result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1]
+            #     for j, t in index_line_period}
+            result_dict['lambda_0'] = dict(m2.getAttr('x', lambda_0))
+            #result_dict['lambda_1'] = dict(m2.getAttr('x', lambda_1))
+            result_dict['lambda_1']=dict(m2.getAttr('x',lambda_1))
+            result_dict['lambda_2'] = dict(m2.getAttr('x', lambda_2))
+            result_dict['lambda_5'] = dict(m2.getAttr('x', lambda_5))
+            # result_dict['lambda_6'] = dict(m2.getAttr('x', lambda_6))
+            # result_dict['lambda_7'] = dict(m2.getAttr('x', lambda_7))
+            #result_dict['lambda_3'] = m2.getAttr('x', [lambda_3])[0]
+            #result_dict['lambda_4'] = m2.getAttr('x', [lambda_4])[0]
+            # logger.info("lambda_0 is \n %s"%(result_dict['lambda_0']))
+            # logger.info("lambda_1 is \n %s" % (result_dict['lambda_1']))
+            # logger.info("lambda_2 is \n %s" % (result_dict['lambda_2']))
+            # logger.info("lambda_3 is \n %s" % (result_dict['lambda_3']))
+            #logger.info("lambda is %s"%(gp.quicksum(m2.getAttr('x', lambda_0)[item]+m2.getAttr('x', lambda_1)[item]+m2.getAttr('x', lambda_2)[item] for item in index_line_period)+m2.getAttr('x', [lambda_3])[0]))
+            # logger.info(result_dict['u_3'])
+
+            result_dict['v_hat'] = {
+                (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] / (
+                        self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
+                        y['q'][j, t] *
+                        self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
+            result_dict['h_1'] = {
+                (j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
+                        result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for j, t in
+                index_line_period}
+            #print(result_dict['S'])
+            result_dict['headway'] = {key: np.min((result_dict['h_1'][key], result_dict['h_2'][key])) for key in index_line_period}
+            '''
+            result_dict['v_hat'] = {
+                (j, t): self._speed[j - 1][t - 1] * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] / (
+                        self._alpha * self._distance[j - 1] * self._peak_point_demand[j - 1][t - 1] + self._t_u *
+                        y['q'][j, t] *
+                        self._speed[j - 1][t - 1] * result_dict['S'][1]) for j, t in index_line_period}
+            '''
+            '''
+            h1_hat = {(j, t): result_dict['S'][1] * y['delta'][j, t] / self._peak_point_demand[j - 1][t - 1] +
+                              result_dict['S'][2] * (1 - y['delta'][j, t]) / self._peak_point_demand[j - 1][t - 1] for
+                      j, t in index_line_period}
+            h2_hat = m2.getAttr('x', m2_h_2)
+            result_dict['headway'] = {key: np.min((h1_hat[key], h2_hat[key])) for key in index_line_period}
+            result_dict['headway_1'] = h1_hat
+            result_dict['headway_2'] = h2_hat
+            '''
+            '''
+            result_dict['headway_2']= dict(m2.getAttr('x', m2_h_2))
+            '''
+            result_dict['status'] = 2
+
+            logger.info('Sub Problem status (infeasible): {}'.format(m2.status))
+            logger.info('The objective value of subproblem is %s' % (m2.objVal))
         return result_dict
 
 
@@ -1382,15 +1352,15 @@ class FOT(object):
                             )
                             for j, t in index_line_period
                         )
-                        # )+
-                        # gp.quicksum(
-                        #     u_5[j,t]*(
-                        #         -S[1]/self._peak_point_demand[j-1][t-1]*m_delta[j,t]
-                        #         -S[2]/self._peak_point_demand[j-1][t-1]*(1-m_delta[j,t])
-                        #         +0.05
-                        #     )
-                        #     for j,t in index_line_period
-                        # )+
+                        +gp.quicksum(
+                            u_5[j,t]*(
+                                -S[1]/self._peak_point_demand[j-1][t-1]*m_delta[j,t]
+                                -S[2]/self._peak_point_demand[j-1][t-1]*(1-m_delta[j,t])
+                                +0.05
+                            )
+                            for j,t in index_line_period
+                        )
+                        #+
                         # gp.quicksum(
                         #     u_6[t]*(
                         #         -N_bar[1]
@@ -1578,11 +1548,11 @@ class FOT(object):
         with open(self._path,'wb') as f:
             while epsilon<tol and iter<maxiter:
                 result_s=self.SubProblem(y)
-                logger.info("S is \n %s"%(result_s['S']))
-                logger.info('headway is \n %s'%(result_s['headway']))
-                logger.info('headway_1 is \n %s' % (result_s['h_1']))
-                logger.info('headway_2 is \n %s' % (result_s['h_2']))
-                logger.info('v_hat is \n %s'%(result_s['v_hat']))
+                # logger.info("S is \n %s"%(result_s['S']))
+                # logger.info('headway is \n %s'%(result_s['headway']))
+                # logger.info('headway_1 is \n %s' % (result_s['h_1']))
+                # logger.info('headway_2 is \n %s' % (result_s['h_2']))
+                # logger.info('v_hat is \n %s'%(result_s['v_hat']))
                 # logger.info('N_hat is \n %s' % (result_s['N_hat']))
                 # logger.info('N_bar is \n %s' % (result_s['N_bar']))
 
