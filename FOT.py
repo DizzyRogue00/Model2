@@ -998,7 +998,7 @@ class FOT(object):
             m2_obj = m2_obj + gp.quicksum(
                 lambda_1[j, t] * (
                         2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][j, t]
-                        +2 * self._t_u * y['X'][j, t] * y['delta'][j,t] * y['q'][j, t] / self._peak_point_demand[j - 1][t - 1] * m2_S[1]
+                        +2 * self._t_u * y['X'][j, t] * y['delta'][j,t] * y['q'][j, t] / self._peak_point_demand[j - 1][t - 1] * s_initial[1]
                         +2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
                         -y['N_hat'][j,t]*s_initial[1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
                         -y['N_hat'][j,t]*s_initial[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
@@ -1034,7 +1034,7 @@ class FOT(object):
                              j, t]) * h_initial[j, t]
                         - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
                                 self._gammar * (1 - (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t]))
-                        - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (self._beta * y['delta'][j, t] * m2_S[1])
+                        - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (self._beta * y['delta'][j, t] * s_initial[1])
                         + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
                                 self._beta * (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t] * s_initial[1])
                         - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * self._beta * (1 - y['delta'][j, t]) *
@@ -1113,7 +1113,7 @@ class FOT(object):
                              j, t]) * h_initial[j, t]
                         - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
                                 self._gammar * (1 - (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t]))
-                        - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (self._beta * y['delta'][j, t] * m2_S[1])
+                        - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (self._beta * y['delta'][j, t] * s_initial[1])
                         + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
                                 self._beta * (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t] * s_initial[1])
                         - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * self._beta * (1 - y['delta'][j, t]) *
