@@ -987,20 +987,15 @@ class FOT(object):
             )
             m2.addConstrs(
                 (
-                        (self._v_w * self._demand[j - 1][t - 1]
-                         + 2 * self._v_v * self._t_u * self._speed[j - 1][t - 1] * self._demand[j - 1][t - 1] *
-                         self._average_distance[j - 1] / self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] *
-                         y['delta'][
-                             j, t]) * m2_h_2[j, t]*m2_h_2[j,t]
-                        - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-                                self._gammar * (1 - (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t]))
-                        - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-                                    self._beta * y['delta'][j, t] * m2_S[1])
-                        + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-                                self._beta * (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t] * m2_S[1])
-                        - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * self._beta * (1 - y['delta'][j, t]) *
-                        m2_S[2]
-                        for j,t in index_line_period
+                    (self._v_w * self._demand[j - 1][t - 1]
+                    + 2 * self._v_v * self._t_u * self._speed[j - 1][t - 1] * self._demand[j - 1][t - 1] *
+                    self._average_distance[j - 1] / self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] *
+                    y['delta'][j, t]) * m2_h_2[j, t]*m2_h_2[j,t]
+                    - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (self._gammar * (1 - (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t]))
+                    - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (self._beta * y['delta'][j, t] * m2_S[1])
+                    + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (self._beta * (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t] * m2_S[1])
+                    - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * self._beta * (1 - y['delta'][j, t]) *m2_S[2]==0
+                    for j,t in index_line_period
                 ),name='in_aux_0'
             )
             # m2.addConstrs((-m2_S[1]/self._peak_point_demand[j-1][t-1]+0.05<=0 for j,t in index_line_period),name='in_sub_5_1')
