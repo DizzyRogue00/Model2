@@ -156,7 +156,7 @@ class FOT(object):
         d_j=d_i.sum(axis=1)
         return d_i,d_j
 
-    def SubProblem(self,y,s,h):
+    def SubProblem(self,y):
         '''
         :param y:
             N_hat:N_j_t
@@ -313,8 +313,8 @@ class FOT(object):
                     +0.05
                 )
                 +u_u[j,t]*(
-                    (self._v_w*self._demnad[j-1][t-1]
-                     +2*self._v_v*self._t_u*self._speed[j-1][t-1]*self._demnad[j-1][t-1]*self._average_distance[j-1]/self._distance[j-1]*y['q'][j,t]*y['X'][j,t]*y['delta'][j,t])*h_h[j,t]
+                    (self._v_w*self._demand[j-1][t-1]
+                     +2*self._v_v*self._t_u*self._speed[j-1][t-1]*self._demand[j-1][t-1]*self._average_distance[j-1]/self._distance[j-1]*y['q'][j,t]*y['X'][j,t]*y['delta'][j,t])*h_h[j,t]
                     -2*self._distance[j-1]/self._speed[j-1][t-1]*(self._gammar*(1-(1-self._alpha)*y['X'][j,t]*y['delta'][j,t]))
                     -2*self._distance[j-1]/self._speed[j-1][t-1]*(self._beta*y['delta'][j,t]*S[1])
                     +2*self._distance[j-1]/self._speed[j-1][t-1]*(self._beta*(1-self._alpha)*y['X'][j,t]*y['delta'][j,t]*S[1])
@@ -399,8 +399,8 @@ class FOT(object):
                     + 0.05
             )
             + u_u[j, t] * (
-                    (self._v_w * self._demnad[j - 1][t - 1]
-                     + 2 * self._v_v * self._t_u * self._speed[j - 1][t - 1] * self._demnad[j - 1][t - 1] *
+                    (self._v_w * self._demand[j - 1][t - 1]
+                     + 2 * self._v_v * self._t_u * self._speed[j - 1][t - 1] * self._demand[j - 1][t - 1] *
                      self._average_distance[j - 1] / self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] * y['delta'][
                          j, t]) * h_h[j, t]
                     - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
@@ -1027,8 +1027,8 @@ class FOT(object):
             )
             m2_obj=m2_obj+gp.quicksum(
                 lambda_lambda[j, t] * (
-                        (self._v_w * self._demnad[j - 1][t - 1]
-                         + 2 * self._v_v * self._t_u * self._speed[j - 1][t - 1] * self._demnad[j - 1][t - 1] *
+                        (self._v_w * self._demand[j - 1][t - 1]
+                         + 2 * self._v_v * self._t_u * self._speed[j - 1][t - 1] * self._demand[j - 1][t - 1] *
                          self._average_distance[j - 1] / self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] *
                          y['delta'][
                              j, t]) * m2_h_h[j, t]
@@ -1106,8 +1106,8 @@ class FOT(object):
                 )
                 +gp.quicksum(
                     lambda_lambda[j, t] * (
-                        (self._v_w * self._demnad[j - 1][t - 1]
-                         + 2 * self._v_v * self._t_u * self._speed[j - 1][t - 1] * self._demnad[j - 1][t - 1] *
+                        (self._v_w * self._demand[j - 1][t - 1]
+                         + 2 * self._v_v * self._t_u * self._speed[j - 1][t - 1] * self._demand[j - 1][t - 1] *
                          self._average_distance[j - 1] / self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] *
                          y['delta'][
                              j, t]) * m2_h_h[j, t]
@@ -1429,7 +1429,7 @@ class FOT(object):
                         +gp.quicksum(
                             u_u[j,t]*(
                                 (self._v_w*self._demand[j-1][t-1]+
-                                 2*self._v_v*self._t_u*self._speed[j-1][t-1]*self._demand[j-1][t-1]*self._average_distance/self._distance*m_zeta[j,t])
+                                 2*self._v_v*self._t_u*self._speed[j-1][t-1]*self._demand[j-1][t-1]*self._average_distance[j-1]/self._distance[j-1]*m_zeta[j,t])
                                 *h_2[j,t]*h_2[j,t]
                                 -2*self._distance[j-1]/self._speed[j-1][t-1]*(self._gammar-(1-self._alpha)*m_xi[j,t])
                                 -2*self._distance[j-1]/self._speed[j-1][t-1]*self._beta*S[1]*m_delta[j,t]
@@ -1515,7 +1515,7 @@ class FOT(object):
                     lambda_lambda[j, t] * (
                             (self._v_w * self._demand[j - 1][t - 1] +
                              2 * self._v_v * self._t_u * self._speed[j - 1][t - 1] * self._demand[j - 1][
-                                 t - 1] * self._average_distance / self._distance * m_zeta[j, t])
+                                 t - 1] * self._average_distance[j-1] / self._distance[j-1] * m_zeta[j, t])
                             * h_2[j, t] * h_2[j, t]
                             - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
                                         self._gammar - (1 - self._alpha) * m_xi[j, t])
