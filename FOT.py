@@ -314,7 +314,7 @@ class FOT(object):
                 )
                 +u_u[j,t]*(
                     (self._v_w*self._demand[j-1][t-1]
-                     +2*self._v_v*self._t_u*self._speed[j-1][t-1]*self._demand[j-1][t-1]*self._average_distance[j-1]/self._distance[j-1]*y['q'][j,t]*y['X'][j,t]*y['delta'][j,t])*h_h[j,t]
+                     +2*self._v_v*self._t_u*self._demand[j-1][t-1]*self._average_distance[j-1]/self._distance[j-1]*y['q'][j,t]*y['X'][j,t]*y['delta'][j,t])*h_h[j,t]
                     -2*self._distance[j-1]/self._speed[j-1][t-1]*(self._gammar*(1-(1-self._alpha)*y['X'][j,t]*y['delta'][j,t]))
                     -2*self._distance[j-1]/self._speed[j-1][t-1]*(self._beta*y['delta'][j,t]*S[1])
                     +2*self._distance[j-1]/self._speed[j-1][t-1]*(self._beta*(1-self._alpha)*y['X'][j,t]*y['delta'][j,t]*S[1])
@@ -400,7 +400,7 @@ class FOT(object):
             )
             + u_u[j, t] * (
                     (self._v_w * self._demand[j - 1][t - 1]
-                     + 2 * self._v_v * self._t_u * self._speed[j - 1][t - 1] * self._demand[j - 1][t - 1] *
+                     + 2 * self._v_v * self._t_u  * self._demand[j - 1][t - 1] *
                      self._average_distance[j - 1] / self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] * y['delta'][
                          j, t]) * h_h[j, t]
                     - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
@@ -988,7 +988,7 @@ class FOT(object):
             m2.addConstrs(
                 (
                     (self._v_w * self._demand[j - 1][t - 1]
-                    + 2 * self._v_v * self._t_u * self._speed[j - 1][t - 1] * self._demand[j - 1][t - 1] *
+                    + 2 * self._v_v * self._t_u * self._demand[j - 1][t - 1] *
                     self._average_distance[j - 1] / self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] *
                     y['delta'][j, t]) * m2_h_2[j, t]*m2_h_2[j,t]
                     - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (self._gammar * (1 - (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t]))
@@ -1302,7 +1302,7 @@ class FOT(object):
         # xi: xi_j_t
         # zeta: zeta_j_t
         y_0 = m.addVar(name='y_0')
-        N_hat=m.addVars(index_line_period,lb=1,ub=100,name='N_hat')
+        N_hat=m.addVars(index_line_period,lb=1,ub=1000,name='N_hat')
         N_tilde=m.addVars(index_line_period,name='N_tilde')
         N_bar=m.addVars(range(1,3),name='N_bar')
         q=m.addVars(index_line_period,ub=30,name='q')
@@ -1327,9 +1327,9 @@ class FOT(object):
         m.addConstrs((zeta[j,t]-q[j,t]<=0 for j,t in index_line_period), name='c_14')
         m.addConstrs((zeta[j,t]-q[j,t]+self._d_j[j-1]-xi[j,t]*self._d_j[j-1]>=0 for j,t in index_line_period), name=
                      'c_15')
-        m.addConstrs((N_tilde[j,t]-100*delta[j,t]<=0 for j,t in index_line_period),name='c_16')
+        m.addConstrs((N_tilde[j,t]-1000*delta[j,t]<=0 for j,t in index_line_period),name='c_16')
         m.addConstrs((N_tilde[j,t]-delta[j,t]>=0 for j,t in index_line_period),name='c_17')
-        m.addConstrs((N_tilde[j,t]-N_hat[j,t]+100-100*delta[j,t]>=0 for j,t in index_line_period),name='c_18')
+        m.addConstrs((N_tilde[j,t]-N_hat[j,t]+1000-1000*delta[j,t]>=0 for j,t in index_line_period),name='c_18')
         m.addConstrs((N_tilde[j,t]-N_hat[j,t]+1-delta[j,t]<=0 for j,t in index_line_period),name='c_19')
         m.addConstrs((N_bar[1]>=N_tilde.sum('*',t) for t in range(1,self._period+1)),name='c_20')
         m.addConstrs((N_bar[2]>=N_hat.sum('*',t)-N_tilde.sum('*',t) for t in range(1,self._period+1)),name='c_21')
@@ -1464,7 +1464,7 @@ class FOT(object):
                         +gp.quicksum(
                             u_u[j,t]*(
                                 (self._v_w*self._demand[j-1][t-1]+
-                                 2*self._v_v*self._t_u*self._speed[j-1][t-1]*self._demand[j-1][t-1]*self._average_distance[j-1]/self._distance[j-1]*m_zeta[j,t])
+                                 2*self._v_v*self._t_u*self._demand[j-1][t-1]*self._average_distance[j-1]/self._distance[j-1]*m_zeta[j,t])
                                 *h_2[j,t]*h_2[j,t]
                                 -2*self._distance[j-1]/self._speed[j-1][t-1]*(self._gammar-(1-self._alpha)*m_xi[j,t])
                                 -2*self._distance[j-1]/self._speed[j-1][t-1]*self._beta*S[1]*m_delta[j,t]
