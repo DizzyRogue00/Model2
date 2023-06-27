@@ -925,7 +925,7 @@ class FOT(object):
             )
             m2.addConstr(
                 gp.quicksum(
-                    lambda_0[j, t]+lambda_1[j,t]+ lambda_2[j, t]+lambda_5[j,t] for j, t in index_line_period
+                    lambda_0[j, t]+lambda_1[j,t]+ lambda_2[j, t]+lambda_5[j,t]+lambda_lambda[j,t] for j, t in index_line_period
                 )== 1,name='scale_lambda')
             # m2.addConstrs(((self._v_w * self._demand[j - 1][t - 1] + 2 * self._v_v * self._t_u * self._demand[j - 1][
             #     t - 1] * self._average_distance[j - 1] / self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] *
