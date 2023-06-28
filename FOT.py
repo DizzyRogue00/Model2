@@ -266,7 +266,7 @@ class FOT(object):
         #     for j, t in index_line_period), name='sub_2')
         m1.addConstrs((H[j,t]
                        -S[1]/self._peak_point_demand[j-1][t-1]*y['delta'][j,t]
-                       -S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])
+                       -S[2]/self._peak_point_demand[j-1][t-1]*(1-y['delta'][j,t])<=0
                        for j,t in index_line_period),name='sub_1')
         m1.addConstrs(
             (
@@ -297,7 +297,7 @@ class FOT(object):
             y['N_hat'][j,t]*H[j,t]
             -2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]
             -2*self._t_u/self._peak_point_demand[j-1][t-1]*S[1]*y['q'][j,t]*y['X'][j,t]*y['delta'][j,t]
-            -2*self._distance[j-1]/self._speed[j-1][t-1]*(1-y['X'][j,t]*y['delta'][j,t])
+            -2*self._distance[j-1]/self._speed[j-1][t-1]*(1-y['X'][j,t]*y['delta'][j,t])==0
             for j, t in index_line_period), name='sub_5')
         # m1.addConstrs((-N_bar[1]+N_hat.prod(y['delta'],'*',t)<=0 for t in range(1,self._period+1)),name='sub_6')
         # m1.addConstrs((-N_bar[2]
