@@ -1608,7 +1608,7 @@ class FOT(object):
             #result_dict['lambda_1'] = dict(m2.getAttr('x', lambda_1))
             result_dict['lambda_1']=dict(m2.getAttr('x',lambda_1))
             result_dict['lambda_2'] = dict(m2.getAttr('x', lambda_2))
-            #result_dict['lambda_5'] = dict(m2.getAttr('x', lambda_5))
+            result_dict['lambda_5'] = dict(m2.getAttr('x', lambda_5))
             #result_dict['lambda_lambda']=dict(m2.getAttr('x',lambda_lambda))
             # result_dict['lambda_6'] = dict(m2.getAttr('x', lambda_6))
             # result_dict['lambda_7'] = dict(m2.getAttr('x', lambda_7))
