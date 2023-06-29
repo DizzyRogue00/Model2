@@ -268,7 +268,7 @@ class FOT(object):
 
         m1.addConstr(self._eta * (S[1] - S[2]) + 1 <= 0, name='sub_3')
         m1.addConstr(self._eta * (S[2] - S[1]) - 6 <= 0, name='sub_4')
-        m1.addConstr(S[1]<=100,name='sub_s')
+        m1.addConstr(S[1]<=80,name='sub_s')
 
         m1.addConstrs((
             y['N_hat'][j, t] * H[j, t]
@@ -1071,7 +1071,7 @@ class FOT(object):
             m2.addConstrs((m2_H_H[j,t]==m2_H[j,t]*m2_H[j,t] for j,t in index_line_period),name='in_aux_0')
             m2.addConstr(self._eta * (m2_S[1] - m2_S[2]) + 1 <= 0, name='in_sub_3')
             m2.addConstr(self._eta * (m2_S[2] - m2_S[1]) - 6 <= 0, name='in_sub_4')
-            m2.addConstr(m2_S[1]<=100,name='in_sub_s')
+            m2.addConstr(m2_S[1]<=80,name='in_sub_s')
             m2.addConstrs(
                 (
                     y['N_hat'][j,t]*m2_H[j,t]
