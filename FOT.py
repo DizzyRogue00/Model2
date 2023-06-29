@@ -1017,7 +1017,7 @@ class FOT(object):
             # )
             m2.addConstr(
                 gp.quicksum(
-                    lambda_0[j, t]+lambda_1[j,t]+ lambda_2[j, t]+lambda_5[j,t] for j, t in index_line_period
+                    lambda_0[j, t]+lambda_1[j,t]+ lambda_2[j, t] for j, t in index_line_period
                 )== 1,name='scale_lambda')
             # m2.addConstrs(((self._v_w * self._demand[j - 1][t - 1] + 2 * self._v_v * self._t_u * self._demand[j - 1][
             #     t - 1] * self._average_distance[j - 1] / self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] *
@@ -1070,6 +1070,15 @@ class FOT(object):
             m2.addConstrs((m2_H_H[j,t]==m2_H[j,t]*m2_H[j,t] for j,t in index_line_period),name='in_aux_0')
             m2.addConstr(self._eta * (m2_S[1] - m2_S[2]) + 1 <= 0, name='in_sub_3')
             m2.addConstr(self._eta * (m2_S[2] - m2_S[1]) - 6 <= 0, name='in_sub_4')
+            m2.addConstrs(
+                (
+                    y['N_hat'][j,t]*m2_H[j,t]
+                    -2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*y['delta'][j,t]*y['X'][j,t]
+                    -2*self._t_u/self._peak_point_demand[j-1][t-1]*m2_S[1]*y['q'][j,t]*y['X'][j,t]*y['delta'][j,t]
+                    -2*self._distance[j-1]/self._speed[j-1][t-1]*(1-y['X'][j,t]*y['delta'][j,t])
+                    for j,t in index_line_period
+                ),name='in_sub_5'
+            )
             # m2.addConstrs(
             #     (
             #         -m2_S[1]*y['delta'][j,t]/self._peak_point_demand[j-1][t-1]
@@ -1473,7 +1482,7 @@ class FOT(object):
         # xi: xi_j_t
         # zeta: zeta_j_t
         y_0 = m.addVar(name='y_0')
-        N_hat=m.addVars(index_line_period,lb=1,ub=1000,name='N_hat')
+        N_hat=m.addVars(index_line_period,lb=1,ub=100,name='N_hat')
         N_tilde=m.addVars(index_line_period,name='N_tilde')
         N_bar=m.addVars(range(1,3),name='N_bar')
         q=m.addVars(index_line_period,ub=30,name='q')
@@ -1499,9 +1508,9 @@ class FOT(object):
         m.addConstrs((zeta[j,t]-q[j,t]+self._d_j[j-1]-xi[j,t]*self._d_j[j-1]>=0 for j,t in index_line_period), name=
                      'c_15')
         m.addConstrs((zeta[j,t]<=self._d_j[j-1] for j,t in index_line_period),name='c_15_0')
-        m.addConstrs((N_tilde[j,t]-1000*delta[j,t]<=0 for j,t in index_line_period),name='c_16')
+        m.addConstrs((N_tilde[j,t]-100*delta[j,t]<=0 for j,t in index_line_period),name='c_16')
         m.addConstrs((N_tilde[j,t]-delta[j,t]>=0 for j,t in index_line_period),name='c_17')
-        m.addConstrs((N_tilde[j,t]-N_hat[j,t]+1000-1000*delta[j,t]>=0 for j,t in index_line_period),name='c_18')
+        m.addConstrs((N_tilde[j,t]-N_hat[j,t]+100-100*delta[j,t]>=0 for j,t in index_line_period),name='c_18')
         m.addConstrs((N_tilde[j,t]-N_hat[j,t]<=0 for j,t in index_line_period),name='c_19')
         m.addConstrs((N_bar[1]>=N_tilde.sum('*',t) for t in range(1,self._period+1)),name='c_20')
         m.addConstrs((N_bar[2]>=N_hat.sum('*',t)-N_tilde.sum('*',t) for t in range(1,self._period+1)),name='c_21')
