@@ -2293,16 +2293,27 @@ class FOT(object):
                 m_delta = y['delta']
                 m_xi = y['xi']
                 m_zeta = y['zeta']
+                print('u_0:',u_0)
+                print('u_1:', u_1)
+                print('u_2:', u_2)
+                print('u_5:', u_5)
                 print('constraint 0')
+                sum_zc=0
                 for j in range(1,self._routeNo+1):
                     for t in range(1,self._period+1):
                         zc=m_q[j, t] * H[j,t] - self._eta * (S[2] - S[1])
-                        print('({},{}): {}'.format(j,t,zc))
+                        zc_zc=u_0[j,t]*zc
+                        sum_zc=sum_zc+zc_zc
+                        print('({},{}): {},{}'.format(j,t,zc,zc_zc))
+                print('sum_zc:',sum_zc)
                 print('constraint 1')
                 for j in range(1,self._routeNo+1):
                     for t in range(1,self._period+1):
                         zc=H[j,t]-S[1] / self._peak_point_demand[j - 1][t - 1] * m_delta[j, t]- S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - m_delta[j, t])
-                        print('({},{}): {}'.format(j,t,zc))
+                        zc_zc = u_1[j, t] * zc
+                        sum_zc = sum_zc + zc_zc
+                        print('({},{}): {},{}'.format(j,t,zc,zc_zc))
+                print('sum_zc:',sum_zc)
                 print('constraint 2')
                 for j in range(1,self._routeNo+1):
                     for t in range(1,self._period+1):
@@ -2315,7 +2326,10 @@ class FOT(object):
                                     + self._beta * (m_delta[j, t] - (1 - self._alpha) * m_xi[j, t]) * S[1]
                                     + self._beta * (1 - m_delta[j, t]) * S[2]
                             )
-                        print('({},{}): {}'.format(j,t,zc))
+                        zc_zc = u_2[j, t] * zc
+                        sum_zc = sum_zc + zc_zc
+                        print('({},{}): {},{}'.format(j,t,zc,zc_zc))
+                print('sum_zc:',sum_zc)
                 print('constraint 5')
                 for j in range(1,self._routeNo+1):
                     for t in range(1,self._period+1):
@@ -2324,7 +2338,10 @@ class FOT(object):
                             +2*self._t_u/self._peak_point_demand[j-1][t-1]*m_zeta[j,t]*S[1]
                             +2*self._distance[j-1]/self._speed[j-1][t-1]*(1-m_xi[j,t])
                         )
-                        print('({},{}): {}'.format(j,t,zc))
+                        zc_zc = u_5[j, t] * zc
+                        sum_zc = sum_zc + zc_zc
+                        print('({},{}): {},{}'.format(j,t,zc.zc_zc))
+                print('sum_zc',sum_zc)
 
                 # print("okokokokokoko")
                 # sum_zc = 0
