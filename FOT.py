@@ -2279,20 +2279,53 @@ class FOT(object):
                 iter+=1
                 UB_LB_tol_dict[iter]=(UB,LB,tol)
                 #result_s = self.SubProblem(y,result_s['S'],result_s['h_2'])
-                # S = result_s['S']
-                # h_2 = result_s['h_2']
-                # u_0 = result_s['u_0']
-                # u_1 = result_s['u_1']
-                # u_2 = result_s['u_2']
-                # u_5 = result_s['u_5']
-                # m_N_hat = y['N_hat']
-                # m_N_tilde = y['N_tilde']
-                # m_N_bar = y['N_bar']
-                # m_q = y['q']
-                # m_X = y['X']
-                # m_delta = y['delta']
-                # m_xi = y['xi']
-                # m_zeta = y['zeta']
+                S = result_s['S']
+                H = result_s['headway']
+                u_0 = result_s['u_0']
+                u_1 = result_s['u_1']
+                u_2 = result_s['u_2']
+                u_5 = result_s['u_5']
+                m_N_hat = y['N_hat']
+                m_N_tilde = y['N_tilde']
+                m_N_bar = y['N_bar']
+                m_q = y['q']
+                m_X = y['X']
+                m_delta = y['delta']
+                m_xi = y['xi']
+                m_zeta = y['zeta']
+                print('constraint 0')
+                for j in range(1,self._routeNo+1):
+                    for t in range(1,self._period+1):
+                        zc=m_q[j, t] * H[j,t] - self._eta * (S[2] - S[1])
+                        print('({},{}): {}'.format(j,t,zc))
+                print('constraint 1')
+                for j in range(1,self._routeNo+1):
+                    for t in range(1,self._period+1):
+                        zc=H[j,t]-S[1] / self._peak_point_demand[j - 1][t - 1] * m_delta[j, t]- S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - m_delta[j, t])
+                        print('({},{}): {}'.format(j,t,zc))
+                print('constraint 2')
+                for j in range(1,self._routeNo+1):
+                    for t in range(1,self._period+1):
+                        zc=H[j, t] * H[j, t] * (
+                            self._v_w * self._demand[j - 1][t - 1]
+                            + 2 * self._v_v * self._t_u * self._demand[j - 1][t - 1] * self._average_distance[j - 1] /
+                            self._distance[j - 1] * m_zeta[j, t]
+                    )- 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+                                    self._gammar * (1 - (1 - self._alpha) * m_xi[j, t])
+                                    + self._beta * (m_delta[j, t] - (1 - self._alpha) * m_xi[j, t]) * S[1]
+                                    + self._beta * (1 - m_delta[j, t]) * S[2]
+                            )
+                        print('({},{}): {}'.format(j,t,zc))
+                print('constraint 5')
+                for j in range(1,self._routeNo+1):
+                    for t in range(1,self._period+1):
+                        zc=m_N_hat[j,t]*H[j,t]-(
+                            2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*m_xi[j,t]
+                            +2*self._t_u/self._peak_point_demand[j-1][t-1]*m_zeta[j,t]*S[1]
+                            +2*self._distance[j-1]/self._speed[j-1][t-1]*(1-m_xi[j,t])
+                        )
+                        print('({},{}): {}'.format(j,t,zc))
+
                 # print("okokokokokoko")
                 # sum_zc = 0
                 # for j in range(1, self._routeNo + 1):
