@@ -378,10 +378,10 @@ class FOT(object):
                     )
                 )
                 + u_5[j, t] * (
-                    -y['N_hat'][j,t]*H[j,t]
-                    +2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*y['delta'][j,t]*y['X'][j,t]
-                    +2*self._t_u/self._peak_point_demand[j-1][t-1]*S[1]*y['q'][j,t]*y['X'][j,t]*y['delta'][j,t]
-                    +2*self._distance[j-1]/self._speed[j-1][t-1]*(1-y['X'][j,t]*y['delta'][j,t])
+                    y['N_hat'][j,t]*H[j,t]
+                    -2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*y['delta'][j,t]*y['X'][j,t]
+                    -2*self._t_u/self._peak_point_demand[j-1][t-1]*S[1]*y['q'][j,t]*y['X'][j,t]*y['delta'][j,t]
+                    -2*self._distance[j-1]/self._speed[j-1][t-1]*(1-y['X'][j,t]*y['delta'][j,t])
                 )
                 for j, t in index_line_period
             ) >= -1e-3
@@ -1005,16 +1005,16 @@ class FOT(object):
             m2.addConstr(self._eta * (m2_S[1] - m2_S[2]) + 1 <= 0, name='in_sub_3')
             m2.addConstr(self._eta * (m2_S[2] - m2_S[1]) - 6 <= 0, name='in_sub_4')
             m2.addConstrs((m2_H[j,t]<=0.2 for j,t in index_line_period),name='in_sub_6')
-            # m2.addConstrs(
-            #     (
-            #         y['N_hat'][j,t]*m2_H[j,t]
-            #         -2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*y['X'][j,t]*y['delta'][j,t]
-            #         -2*self._t_u/self._peak_point_demand[j-1][t-1]*m2_S[1]*y['q'][j,t]*y['X'][j,t]*y['delta'][j,t]
-            #         -2*self._distance[j-1]/self._speed[j-1][t-1]*(1-y['X'][j,t]*y['delta'][j,t])
-            #         ==0
-            #         for j,t in index_line_period
-            #     ),name='in_sub_5'
-            # )
+            m2.addConstrs(
+                (
+                    y['N_hat'][j,t]*m2_H[j,t]
+                    -2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*y['X'][j,t]*y['delta'][j,t]
+                    -2*self._t_u/self._peak_point_demand[j-1][t-1]*m2_S[1]*y['q'][j,t]*y['X'][j,t]*y['delta'][j,t]
+                    -2*self._distance[j-1]/self._speed[j-1][t-1]*(1-y['X'][j,t]*y['delta'][j,t])
+                    <=0
+                    for j,t in index_line_period
+                ),name='in_sub_5'
+            )
             m2_obj = gp.quicksum(
                 lambda_0[j, t] * (
                         y['q'][j, t] * m2_H[j, t] - self._eta * (m2_S[2] - m2_S[1]))
@@ -1722,7 +1722,8 @@ class FOT(object):
         m.addConstrs((zeta[j,t]-q[j,t]+self._d_j[j-1]-xi[j,t]*self._d_j[j-1]>=0 for j,t in index_line_period), name=
                      'c_15')
         m.addConstrs((zeta[j,t]<=self._d_j[j-1] for j,t in index_line_period),name='c_15_0')
-        m.addConstrs((N_hat[j,t]>=10*self._distance[j-1]/self._speed[j-1][t-1] for j,t in index_line_period),name='c_16')
+        m.addConstrs((N_hat[j,t]>=10*self._distance[j-1]/self._speed[j-1][t-1] for j,t in index_line_period),name='c_16_0')
+        m.addConstrs((N_hat[j,t]<=40*self._distance[j-1]/self._speed[j-1][t-1] for j,t in index_line_period),name='c_16_1')
         m.addConstrs((N_tilde[j,t]-100*delta[j,t]<=0 for j,t in index_line_period),name='c_17')
         m.addConstrs((N_tilde[j,t]-delta[j,t]>=0 for j,t in index_line_period),name='c_18')
         m.addConstrs((N_tilde[j,t]-N_hat[j,t]+100-100*delta[j,t]>=0 for j,t in index_line_period),name='c_19')
@@ -2441,7 +2442,7 @@ class FOT(object):
                 print('constraint 5')
                 for j in range(1,self._routeNo+1):
                     for t in range(1,self._period+1):
-                        zc=-m_N_hat[j,t]*H[j,t]+(
+                        zc=m_N_hat[j,t]*H[j,t]-(
                             2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*m_xi[j,t]
                             +2*self._t_u/self._peak_point_demand[j-1][t-1]*m_zeta[j,t]*S[1]
                             +2*self._distance[j-1]/self._speed[j-1][t-1]*(1-m_xi[j,t])
