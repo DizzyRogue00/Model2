@@ -1722,7 +1722,7 @@ class FOT(object):
         m.addConstrs((zeta[j,t]-q[j,t]+self._d_j[j-1]-xi[j,t]*self._d_j[j-1]>=0 for j,t in index_line_period), name=
                      'c_15')
         m.addConstrs((zeta[j,t]<=self._d_j[j-1] for j,t in index_line_period),name='c_15_0')
-        m.addConstrs((N_bar[j,t]>=10*self._alpha/self.speed[j-1][t-1] for j,t in index_line_period),name='c_16')
+        m.addConstrs((N_hat[j,t]>=10*self._distance[j-1]/self._speed[j-1][t-1] for j,t in index_line_period),name='c_16')
         m.addConstrs((N_tilde[j,t]-100*delta[j,t]<=0 for j,t in index_line_period),name='c_17')
         m.addConstrs((N_tilde[j,t]-delta[j,t]>=0 for j,t in index_line_period),name='c_18')
         m.addConstrs((N_tilde[j,t]-N_hat[j,t]+100-100*delta[j,t]>=0 for j,t in index_line_period),name='c_19')
