@@ -1722,14 +1722,15 @@ class FOT(object):
         m.addConstrs((zeta[j,t]-q[j,t]+self._d_j[j-1]-xi[j,t]*self._d_j[j-1]>=0 for j,t in index_line_period), name=
                      'c_15')
         m.addConstrs((zeta[j,t]<=self._d_j[j-1] for j,t in index_line_period),name='c_15_0')
-        m.addConstrs((N_tilde[j,t]-100*delta[j,t]<=0 for j,t in index_line_period),name='c_16')
-        m.addConstrs((N_tilde[j,t]-delta[j,t]>=0 for j,t in index_line_period),name='c_17')
-        m.addConstrs((N_tilde[j,t]-N_hat[j,t]+100-100*delta[j,t]>=0 for j,t in index_line_period),name='c_18')
-        m.addConstrs((N_tilde[j,t]-N_hat[j,t]<=0 for j,t in index_line_period),name='c_19')
-        m.addConstrs((N_bar[1]>=N_tilde.sum('*',t) for t in range(1,self._period+1)),name='c_20')
-        m.addConstrs((N_bar[2]>=N_hat.sum('*',t)-N_tilde.sum('*',t) for t in range(1,self._period+1)),name='c_21')
-        m.addConstrs((N_hat[j,t]>=1 for j,t in index_line_period),name='c_22')#> -> >=
-        m.addConstrs((N_bar[s]>=0 for s in range(1,3)),name='c_23')#> -> >=
+        m.addConstrs((N_bar[j,t]>=10*self._alpha/self.speed[j-1][t-1] for j,t in index_line_period),name='c_16')
+        m.addConstrs((N_tilde[j,t]-100*delta[j,t]<=0 for j,t in index_line_period),name='c_17')
+        m.addConstrs((N_tilde[j,t]-delta[j,t]>=0 for j,t in index_line_period),name='c_18')
+        m.addConstrs((N_tilde[j,t]-N_hat[j,t]+100-100*delta[j,t]>=0 for j,t in index_line_period),name='c_19')
+        m.addConstrs((N_tilde[j,t]-N_hat[j,t]<=0 for j,t in index_line_period),name='c_20')
+        m.addConstrs((N_bar[1]>=N_tilde.sum('*',t) for t in range(1,self._period+1)),name='c_21')
+        m.addConstrs((N_bar[2]>=N_hat.sum('*',t)-N_tilde.sum('*',t) for t in range(1,self._period+1)),name='c_22')
+        m.addConstrs((N_hat[j,t]>=1 for j,t in index_line_period),name='c_23')#> -> >=
+        m.addConstrs((N_bar[s]>=0 for s in range(1,3)),name='c_24')#> -> >=
 
         m.setObjective(y_0,sense=GRB.MINIMIZE)
         #m.Params.lazyConstraints=1
@@ -1933,6 +1934,7 @@ class FOT(object):
                         #u_4*(self._eta*(S[2]-S[1])-6)+
                         +(gp.quicksum(self._d_j) - gp.quicksum(m_q[j, t] for j, t in index_line_period)) * self._v_p
                         )
+            '''
             m.addConstr(
                 gp.quicksum(
                     u_0[j, t] * (m_q[j, t] * H[j, t] - self._eta * (S[2] - S[1]))
@@ -1969,6 +1971,7 @@ class FOT(object):
                     for j, t in index_line_period
                 )<=-1e-4
             )
+            '''
         else:
             '''
             m.addConstr(
