@@ -1069,6 +1069,7 @@ class FOT(object):
             #         for j,t in index_line_period
             #     ),name='in_sub_5'
             # )
+            '''
             m2.addConstrs(
                 (
                     y['N_hat'][j, t] * m2_H[j, t]
@@ -1095,6 +1096,7 @@ class FOT(object):
                     for j, t in index_line_period
                 ), name='in_sub_6'
             )
+            '''
             m2_obj = gp.quicksum(
                 lambda_0[j, t] * (
                         y['q'][j, t] * m2_H[j, t] - self._eta * (m2_S[2] - m2_S[1]))
