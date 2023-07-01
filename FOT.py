@@ -405,10 +405,10 @@ class FOT(object):
                         y['X'][j, t]
                         - 2 * self._t_u * H[j,t] * y['q'][j, t] * y['X'][j, t] *
                         y['delta'][j, t]
-                        - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])-1e-3
+                        - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])-1
                 )
                 + u_6[j, t] * (
-                        -1e-3
+                        -1
                         -y['N_hat'][j, t] * H[j, t]
                         + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['delta'][j, t] *
                         y['X'][j, t]
