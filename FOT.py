@@ -2092,7 +2092,7 @@ class FOT(object):
                     )
                     for j, t in index_line_period
                 )
-                <= 0
+                <= -1e-4
             )
         # add_constr=[cons for cons in m.getConstrs() if 'add' in cons.ConstrName]
         # if not add_constr:
@@ -2151,7 +2151,7 @@ class FOT(object):
         #             for j in range(1, self._routeNo + 1)) for t in range(1, self._period + 1)), name='add3')
 
         m.update()
-        #m.write('out1.lp')
+        m.write('out1.lp')
         # N_hat: N_j_t
         # N_bar: N_s
         # q: q_j_t
@@ -2219,6 +2219,7 @@ class FOT(object):
             #result_s = self.SubProblem(y, [], [])
             while epsilon<tol and iter<maxiter:
                 result_s=self.SubProblem(y)
+
                 # logger.info("S is \n %s"%(result_s['S']))
                 # logger.info('headway is \n %s'%(result_s['headway']))
                 # logger.info('headway_1 is \n %s' % (result_s['h_1']))
@@ -2293,6 +2294,7 @@ class FOT(object):
                 m_delta = y['delta']
                 m_xi = y['xi']
                 m_zeta = y['zeta']
+                print(result_s['status'])
                 print('u_0:',u_0)
                 print('u_1:', u_1)
                 print('u_2:', u_2)
@@ -2333,14 +2335,14 @@ class FOT(object):
                 print('constraint 5')
                 for j in range(1,self._routeNo+1):
                     for t in range(1,self._period+1):
-                        zc=m_N_hat[j,t]*H[j,t]-(
+                        zc=-m_N_hat[j,t]*H[j,t]+(
                             2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*m_xi[j,t]
                             +2*self._t_u/self._peak_point_demand[j-1][t-1]*m_zeta[j,t]*S[1]
                             +2*self._distance[j-1]/self._speed[j-1][t-1]*(1-m_xi[j,t])
                         )
                         zc_zc = u_5[j, t] * zc
                         sum_zc = sum_zc + zc_zc
-                        print('({},{}): {},{}'.format(j,t,zc.zc_zc))
+                        print('({},{}): {},{}'.format(j,t,zc,zc_zc))
                 print('sum_zc',sum_zc)
 
                 # print("okokokokokoko")
