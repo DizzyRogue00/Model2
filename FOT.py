@@ -995,6 +995,7 @@ class FOT(object):
             lambda_1 = m2.addVars(index_line_period, name='lambda_1')
             lambda_2 = m2.addVars(index_line_period, name='lambda_2')
             lambda_5 = m2.addVars(index_line_period, name='lambda_5')
+            m2_inf=m2.addVar(lb=1e-6,name='m2_inf')
 
             m2.addConstr(
                 gp.quicksum(
@@ -1003,6 +1004,7 @@ class FOT(object):
             m2.addConstrs((m2_H_H[j, t] == m2_H[j, t] * m2_H[j, t] for j, t in index_line_period), name='in_aux_0')
             m2.addConstr(self._eta * (m2_S[1] - m2_S[2]) + 1 <= 0, name='in_sub_3')
             m2.addConstr(self._eta * (m2_S[2] - m2_S[1]) - 6 <= 0, name='in_sub_4')
+            m2.addConstrs((H[j,t]<=0.5 for j,t in index_line_period),name='in_sub_6')
             # m2.addConstrs(
             #     (
             #         y['N_hat'][j,t]*m2_H[j,t]
@@ -1055,51 +1057,51 @@ class FOT(object):
                 )
                 for j, t in index_line_period
             )
-            # m2.addConstr(
-            #     gp.quicksum(
-            #         lambda_0[j, t] * (
-            #                 y['q'][j, t] * m2_H[j, t] - self._eta * (m2_S[2] - m2_S[1]))
-            #         for j, t in index_line_period
-            #     )
-            #     + gp.quicksum(
-            #         lambda_1[j, t] * (
-            #                 m2_H[j, t]
-            #                 - m2_S[1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
-            #                 - m2_S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
-            #         )
-            #         for j, t in index_line_period
-            #     )
-            #     + gp.quicksum(
-            #         lambda_2[j, t] * (
-            #                 m2_H_H[j, t] * (
-            #                 self._v_w * self._demand[j - 1][t - 1]
-            #                 + 2 * self._v_v * self._t_u * self._demand[j - 1][t - 1] * self._average_distance[j - 1] /
-            #                 self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] * y['delta'][j, t]
-            #         )
-            #                 - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-            #                         self._gammar
-            #                         - self._gammar * (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t]
-            #                         + self._beta * (y['delta'][j, t] - (1 - self._alpha) * y['X'][j, t] * y['delta'][
-            #                     j, t]) * m2_S[1]
-            #                         + self._beta * (1 - y['delta'][j, t]) * m2_S[2]
-            #                 )
-            #         )
-            #         for j, t in index_line_period
-            #     )
-            #     + gp.quicksum(
-            #         lambda_5[j, t] * (
-            #                 y['N_hat'][j, t] * m2_H[j, t]
-            #                 - 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
-            #                 y['delta'][j, t]
-            #                 - 2 * self._t_u / self._peak_point_demand[j - 1][t - 1] * m2_S[1] * y['q'][j, t] * y['X'][
-            #                     j, t] * y['delta'][j, t]
-            #                 - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-            #                             1 - y['X'][j, t] * y['delta'][j, t])
-            #         )
-            #         for j, t in index_line_period
-            #     )
-            #     >= 1e-4
-            # )
+            m2.addConstr(
+                gp.quicksum(
+                    lambda_0[j, t] * (
+                            y['q'][j, t] * m2_H[j, t] - self._eta * (m2_S[2] - m2_S[1]))
+                    for j, t in index_line_period
+                )
+                + gp.quicksum(
+                    lambda_1[j, t] * (
+                            m2_H[j, t]
+                            - m2_S[1] / self._peak_point_demand[j - 1][t - 1] * y['delta'][j, t]
+                            - m2_S[2] / self._peak_point_demand[j - 1][t - 1] * (1 - y['delta'][j, t])
+                    )
+                    for j, t in index_line_period
+                )
+                + gp.quicksum(
+                    lambda_2[j, t] * (
+                            m2_H_H[j, t] * (
+                            self._v_w * self._demand[j - 1][t - 1]
+                            + 2 * self._v_v * self._t_u * self._demand[j - 1][t - 1] * self._average_distance[j - 1] /
+                            self._distance[j - 1] * y['q'][j, t] * y['X'][j, t] * y['delta'][j, t]
+                    )
+                            - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+                                    self._gammar
+                                    - self._gammar * (1 - self._alpha) * y['X'][j, t] * y['delta'][j, t]
+                                    + self._beta * (y['delta'][j, t] - (1 - self._alpha) * y['X'][j, t] * y['delta'][
+                                j, t]) * m2_S[1]
+                                    + self._beta * (1 - y['delta'][j, t]) * m2_S[2]
+                            )
+                    )
+                    for j, t in index_line_period
+                )
+                + gp.quicksum(
+                    lambda_5[j, t] * (
+                            y['N_hat'][j, t] * m2_H[j, t]
+                            - 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+                            y['delta'][j, t]
+                            - 2 * self._t_u / self._peak_point_demand[j - 1][t - 1] * m2_S[1] * y['q'][j, t] * y['X'][
+                                j, t] * y['delta'][j, t]
+                            - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+                                        1 - y['X'][j, t] * y['delta'][j, t])
+                    )
+                    for j, t in index_line_period
+                )-m2_inf
+                ==0
+            )
             '''
             m2_S=y['S']
             m2_H=y['H']
@@ -1586,7 +1588,7 @@ class FOT(object):
             m2_obj=m2_obj+lambda_3*(self._eta*(m2_S[1]-m2_S[2])+1)
             m2.addConstr(m2_obj>=10)
             '''
-            m2.setObjective(m2_obj,gp.GRB.MINIMIZE)
+            m2.setObjective(m2_inf,gp.GRB.MINIMIZE)
             m2.update()
             m2.optimize()
             print(m2.status)
@@ -1931,42 +1933,42 @@ class FOT(object):
                         #u_4*(self._eta*(S[2]-S[1])-6)+
                         +(gp.quicksum(self._d_j) - gp.quicksum(m_q[j, t] for j, t in index_line_period)) * self._v_p
                         )
-            # m.addConstr(
-            #     gp.quicksum(
-            #         u_0[j, t] * (m_q[j, t] * H[j, t] - self._eta * (S[2] - S[1]))
-            #         for j, t in index_line_period
-            #     ) +
-            #     gp.quicksum(
-            #         u_1[j, t] * (
-            #                 H[j, t] - S[1] / self._peak_point_demand[j - 1][t - 1]
-            #         )
-            #         for j, t in index_line_period
-            #     ) +
-            #     gp.quicksum(
-            #         u_2[j, t] * (
-            #                 H[j, t] * H[j, t] * (
-            #                 self._v_w * self._demand[j - 1][t - 1]
-            #                 + 2 * self._v_v * self._t_u * self._demand[j - 1][t - 1] * self._average_distance[j - 1] /
-            #                 self._distance[j - 1] * m_zeta[j, t]
-            #         )
-            #                 - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
-            #                         self._gammar * (1 - (1 - self._alpha) * m_xi[j, t])
-            #                         + self._beta * (m_delta[j, t] - (1 - self._alpha) * m_xi[j, t]) * S[1]
-            #                         + self._beta * (1 - m_delta[j, t]) * S[2]
-            #                 )
-            #         )
-            #         for j, t in index_line_period
-            #     )
-            #     + gp.quicksum(
-            #         u_5[j, t] * (
-            #                 -m_N_hat[j, t] * H[j, t]
-            #                 + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
-            #                 + 2 * self._t_u / self._peak_point_demand[j - 1][t - 1] * S[1] * m_zeta[j, t]
-            #                 + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])
-            #         )
-            #         for j, t in index_line_period
-            #     )<=0
-            # )
+            m.addConstr(
+                gp.quicksum(
+                    u_0[j, t] * (m_q[j, t] * H[j, t] - self._eta * (S[2] - S[1]))
+                    for j, t in index_line_period
+                ) +
+                gp.quicksum(
+                    u_1[j, t] * (
+                            H[j, t] - S[1] / self._peak_point_demand[j - 1][t - 1]
+                    )
+                    for j, t in index_line_period
+                ) +
+                gp.quicksum(
+                    u_2[j, t] * (
+                            H[j, t] * H[j, t] * (
+                            self._v_w * self._demand[j - 1][t - 1]
+                            + 2 * self._v_v * self._t_u * self._demand[j - 1][t - 1] * self._average_distance[j - 1] /
+                            self._distance[j - 1] * m_zeta[j, t]
+                    )
+                            - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+                                    self._gammar * (1 - (1 - self._alpha) * m_xi[j, t])
+                                    + self._beta * (m_delta[j, t] - (1 - self._alpha) * m_xi[j, t]) * S[1]
+                                    + self._beta * (1 - m_delta[j, t]) * S[2]
+                            )
+                    )
+                    for j, t in index_line_period
+                )
+                + gp.quicksum(
+                    u_5[j, t] * (
+                            -m_N_hat[j, t] * H[j, t]
+                            + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
+                            + 2 * self._t_u / self._peak_point_demand[j - 1][t - 1] * S[1] * m_zeta[j, t]
+                            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])
+                    )
+                    for j, t in index_line_period
+                )<=-1e-4
+            )
         else:
             '''
             m.addConstr(
@@ -2094,6 +2096,7 @@ class FOT(object):
                 )
                 <= -1e-4
             )
+        '''
         add0_constr=[cons for cons in m.getConstrs() if 'add0' in cons.ConstrName]
         add1_constr = [cons for cons in m.getConstrs() if 'add1' in cons.ConstrName]
         add2_constr = [cons for cons in m.getConstrs() if 'add2' in cons.ConstrName]
@@ -2171,7 +2174,7 @@ class FOT(object):
                     -m_N_hat[j, t] * H[j, t]
                     + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
                     + 2 * self._t_u / self._peak_point_demand[j - 1][t - 1] * S[1] * m_zeta[j, t]
-                    + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])<=0
+                    + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])<=-1e-4
                     for j,t in index_line_period
                 ),name='add5'
             )
@@ -2182,10 +2185,11 @@ class FOT(object):
                     -m_N_hat[j, t] * H[j, t]
                     + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
                     + 2 * self._t_u / self._peak_point_demand[j - 1][t - 1] * S[1] * m_zeta[j, t]
-                    + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t]) <= 0
+                    + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t]) <= -1e-4
                     for j, t in index_line_period
                 ), name='add5'
             )
+        '''
         # if not add_constr:
         #     m.addConstrs(
         #         (
