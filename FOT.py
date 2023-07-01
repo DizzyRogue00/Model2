@@ -1041,8 +1041,11 @@ class FOT(object):
             m2.setParam('nonconvex', 2)
             m2.Params.timeLimit = 200
 
-            m2_S = m2.addVars(range(1, 3), lb=1,ub=200, name='m2_S')
-            m2_H = m2.addVars(index_line_period, lb=0.05, name='m2_H')
+            # m2_S = m2.addVars(range(1, 3), lb=1,ub=200, name='m2_S')
+            # m2_H = m2.addVars(index_line_period, lb=0.05, name='m2_H')
+            # m2_H_H = m2.addVars(index_line_period, name='m2_H_H')
+            m2_S = y['S']
+            m2_H = y['headway']
             m2_H_H = m2.addVars(index_line_period, name='m2_H_H')
             lambda_0 = m2.addVars(index_line_period, name='lambda_0')
             lambda_1 = m2.addVars(index_line_period, name='lambda_1')
@@ -1056,9 +1059,11 @@ class FOT(object):
                     lambda_0[j, t] + lambda_1[j, t] + lambda_2[j, t]+lambda_5[j,t]+lambda_6[j,t] for j, t in index_line_period
                 ) == 1, name='scale_lambda')
             m2.addConstrs((m2_H_H[j, t] == m2_H[j, t] * m2_H[j, t] for j, t in index_line_period), name='in_aux_0')
+            '''
             m2.addConstr(self._eta * (m2_S[1] - m2_S[2]) + 1 <= 0, name='in_sub_3')
             m2.addConstr(self._eta * (m2_S[2] - m2_S[1]) - 6 <= 0, name='in_sub_4')
             m2.addConstrs((m2_H[j,t]<=0.2 for j,t in index_line_period),name='in_sub_6')
+            '''
             # m2.addConstrs(
             #     (
             #         y['N_hat'][j,t]*m2_H[j,t]
@@ -1726,8 +1731,10 @@ class FOT(object):
             m2.optimize()
             print(m2.status)
             result_dict['objval'] = float('inf')
-            result_dict['S'] = dict(m2.getAttr('x', m2_S))
-            result_dict['headway'] = dict(m2.getAttr('x', m2_H))
+            # result_dict['S'] = dict(m2.getAttr('x', m2_S))
+            # result_dict['headway'] = dict(m2.getAttr('x', m2_H))
+            result_dict['S'] = m2_S
+            result_dict['headway'] = m2_H
             #result_dict['h_2']=dict(m2.getAttr('x',m2_h_2))
             # result_dict['S'] = s_initial
             # result_dict['h_2'] = h_initial
