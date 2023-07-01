@@ -504,7 +504,7 @@ class FOT(object):
 
         m1.setObjective(obj,gp.GRB.MINIMIZE)
         m1.update()
-        #m1.write('out.lp')
+        m1.write('out.lp')
         m1.optimize()
 
         print(m1.status)
@@ -1004,7 +1004,7 @@ class FOT(object):
             m2.addConstrs((m2_H_H[j, t] == m2_H[j, t] * m2_H[j, t] for j, t in index_line_period), name='in_aux_0')
             m2.addConstr(self._eta * (m2_S[1] - m2_S[2]) + 1 <= 0, name='in_sub_3')
             m2.addConstr(self._eta * (m2_S[2] - m2_S[1]) - 6 <= 0, name='in_sub_4')
-            m2.addConstrs((H[j,t]<=0.5 for j,t in index_line_period),name='in_sub_6')
+            m2.addConstrs((m2_H[j,t]<=0.5 for j,t in index_line_period),name='in_sub_6')
             # m2.addConstrs(
             #     (
             #         y['N_hat'][j,t]*m2_H[j,t]
