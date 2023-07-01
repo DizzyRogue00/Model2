@@ -184,7 +184,8 @@ class FOT(object):
         u_0 = m1.addVars(index_line_period, name='u_0')
         u_1 = m1.addVars(index_line_period, name='u_1')
         u_2=m1.addVars(index_line_period,name='u_2')
-        u_5=m1.addVars(index_line_period,lb=-GRB.INFINITY,name='u_5')
+        u_5=m1.addVars(index_line_period,name='u_5')
+        u_6=m1.addVars(index_line_period,name='u_6')
         #u_u=m1.addVars(index_line_period,lb=-GRB.INFINITY,name='u_u')
         #h_h=m1.addVars(index_line_period,name='h_h')
         #u_3 = m1.addVar(name='u_3')
@@ -282,8 +283,16 @@ class FOT(object):
             - 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['delta'][j, t] * y['X'][j, t]
             - 2 * self._t_u  * H[j,t] * y['q'][j, t] * y['X'][j, t] * y['delta'][
                 j, t]
-            - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t]) == 0
+            - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])-1e-3 <= 0
             for j, t in index_line_period), name='sub_5')
+        m1.addConstrs((
+            -1e-3
+            -y['N_hat'][j, t] * H[j, t]
+            + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['delta'][j, t] * y['X'][j, t]
+            + 2 * self._t_u * H[j, t] * y['q'][j, t] * y['X'][j, t] * y['delta'][
+                j, t]
+            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t]) <= 0
+            for j, t in index_line_period), name='sub_6')
 
         #m1.addConstrs((y['q'][j,t]*S[1]-self._eta*(S[2]-S[1])*self._peak_point_demand[j-1][t-1]<=0 for j,t in index_line_period),name='sub_0')
         # m1.addConstrs((-y['N_hat'][j, t] * H[j, t]
@@ -396,7 +405,16 @@ class FOT(object):
                         y['X'][j, t]
                         - 2 * self._t_u * H[j,t] * y['q'][j, t] * y['X'][j, t] *
                         y['delta'][j, t]
-                        - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+                        - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])-1e-3
+                )
+                + u_6[j, t] * (
+                        -1e-3
+                        -y['N_hat'][j, t] * H[j, t]
+                        + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['delta'][j, t] *
+                        y['X'][j, t]
+                        + 2 * self._t_u * H[j, t] * y['q'][j, t] * y['X'][j, t] *
+                        y['delta'][j, t]
+                        + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
                 )
                 for j, t in index_line_period
             ) >= -1e-3
@@ -482,6 +500,16 @@ class FOT(object):
                         - 2 * self._t_u  * H[j,t] * y['q'][j, t] * y['X'][j, t] *
                         y['delta'][j, t]
                         - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+                        -1e-3
+                )
+                + u_6[j, t] * (
+                        -1e-3
+                        -y['N_hat'][j, t] * H[j, t]
+                        + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+                        y['delta'][j, t]
+                        + 2 * self._t_u * H[j, t] * y['q'][j, t] * y['X'][j, t] *
+                        y['delta'][j, t]
+                        + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
                 )
                 for j, t in index_line_period
             )
@@ -730,6 +758,7 @@ class FOT(object):
             result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_2']=dict(m1.getAttr('x',u_2))
             result_dict['u_5'] = dict(m1.getAttr('x', u_5))
+            result_dict['u_6'] = dict(m1.getAttr('x', u_6))
             #result_dict['u_u'] = dict(m1.getAttr('x', u_u))
             #result_dict['u_3'] = m1.getAttr('x', [u_3])[0]
             #result_dict['u_4'] = m1.getAttr('x', [u_4])[0]
@@ -949,6 +978,7 @@ class FOT(object):
             result_dict['u_1'] = dict(m1.getAttr('x', u_1))
             result_dict['u_2']=dict(m1.getAttr('x',u_2))
             result_dict['u_5'] = dict(m1.getAttr('x', u_5))
+            result_dict['u_6'] = dict(m1.getAttr('x', u_6))
             #result_dict['u_u'] = dict(m1.getAttr('x', u_u))
             #result_dict['u_6'] = dict(m1.getAttr('x', u_6))
             #result_dict['u_7'] = dict(m1.getAttr('x', u_7))
@@ -1017,12 +1047,13 @@ class FOT(object):
             lambda_0 = m2.addVars(index_line_period, name='lambda_0')
             lambda_1 = m2.addVars(index_line_period, name='lambda_1')
             lambda_2 = m2.addVars(index_line_period, name='lambda_2')
-            lambda_5 = m2.addVars(index_line_period,lb=-GRB.INFINITY, name='lambda_5')
+            lambda_5 = m2.addVars(index_line_period, name='lambda_5')
+            lambda_6 = m2.addVars(index_line_period, name='lambda_6')
             m2_inf=m2.addVar(lb=1e-6,name='m2_inf')
 
             m2.addConstr(
                 gp.quicksum(
-                    lambda_0[j, t] + lambda_1[j, t] + lambda_2[j, t] for j, t in index_line_period
+                    lambda_0[j, t] + lambda_1[j, t] + lambda_2[j, t]+lambda_5[j,t]+lambda_6[j,t] for j, t in index_line_period
                 ) == 1, name='scale_lambda')
             m2.addConstrs((m2_H_H[j, t] == m2_H[j, t] * m2_H[j, t] for j, t in index_line_period), name='in_aux_0')
             m2.addConstr(self._eta * (m2_S[1] - m2_S[2]) + 1 <= 0, name='in_sub_3')
@@ -1046,9 +1077,23 @@ class FOT(object):
                     - 2 * self._t_u * m2_H[j,t] * y['q'][j, t] * y['X'][j, t] *
                     y['delta'][j, t]
                     - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                    == 0
+                    -1e-3
+                    <= 0
                     for j, t in index_line_period
                 ), name='in_sub_5'
+            )
+            m2.addConstrs(
+                (
+                    -1e-3
+                    -y['N_hat'][j, t] * m2_H[j, t]
+                    + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] * y['delta'][
+                        j, t]
+                    + 2 * self._t_u * m2_H[j, t] * y['q'][j, t] * y['X'][j, t] *
+                    y['delta'][j, t]
+                    + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+                    <= 0
+                    for j, t in index_line_period
+                ), name='in_sub_6'
             )
             m2_obj = gp.quicksum(
                 lambda_0[j, t] * (
@@ -1100,6 +1145,19 @@ class FOT(object):
                         - 2 * self._t_u  * m2_H[j,t] * y['q'][j, t] * y['X'][
                             j, t] * y['delta'][j, t]
                         - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
+                        -1e-3
+                )
+                for j, t in index_line_period
+            )
+            m2_obj = m2_obj + gp.quicksum(
+                lambda_6[j, t] * (
+                        -1e-3
+                        -y['N_hat'][j, t] * m2_H[j, t]
+                        + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+                        y['delta'][j, t]
+                        + 2 * self._t_u * m2_H[j, t] * y['q'][j, t] * y['X'][
+                            j, t] * y['delta'][j, t]
+                        + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
                 )
                 for j, t in index_line_period
             )
@@ -1154,6 +1212,20 @@ class FOT(object):
                             - 2 * self._t_u  * m2_H[j,t] * y['q'][j, t] * y['X'][
                                 j, t] * y['delta'][j, t]
                             - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
+                                    1 - y['X'][j, t] * y['delta'][j, t])
+                            -1e-3
+                    )
+                    for j, t in index_line_period
+                )
+                + gp.quicksum(
+                    lambda_6[j, t] * (
+                            -1e-3
+                            -y['N_hat'][j, t] * m2_H[j, t]
+                            + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
+                            y['delta'][j, t]
+                            + 2 * self._t_u * m2_H[j, t] * y['q'][j, t] * y['X'][
+                                j, t] * y['delta'][j, t]
+                            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
                                     1 - y['X'][j, t] * y['delta'][j, t])
                     )
                     for j, t in index_line_period
@@ -1670,6 +1742,7 @@ class FOT(object):
             result_dict['lambda_1']=dict(m2.getAttr('x',lambda_1))
             result_dict['lambda_2'] = dict(m2.getAttr('x', lambda_2))
             result_dict['lambda_5'] = dict(m2.getAttr('x', lambda_5))
+            result_dict['lambda_6'] = dict(m2.getAttr('x', lambda_6))
             #result_dict['lambda_lambda']=dict(m2.getAttr('x',lambda_lambda))
             # result_dict['lambda_6'] = dict(m2.getAttr('x', lambda_6))
             # result_dict['lambda_7'] = dict(m2.getAttr('x', lambda_7))
@@ -1781,8 +1854,16 @@ class FOT(object):
         m.addConstrs((zeta[j,t]-q[j,t]+self._d_j[j-1]-xi[j,t]*self._d_j[j-1]>=0 for j,t in index_line_period), name=
                      'c_15')
         m.addConstrs((zeta[j,t]<=self._d_j[j-1] for j,t in index_line_period),name='c_15_0')
-        m.addConstrs((N_hat[j,t]>=10*self._distance[j-1]/self._speed[j-1][t-1] for j,t in index_line_period),name='c_16_0')
-        m.addConstrs((N_hat[j,t]<=40*self._distance[j-1]/self._speed[j-1][t-1] for j,t in index_line_period),name='c_16_1')
+        if self._alpha>=1:
+            m.addConstrs((N_hat[j,t]>=10*self._distance[j-1]/self._speed[j-1][t-1] for j,t in index_line_period),name='c_16_0')
+            m.addConstrs((N_hat[j,t]<=40*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]+1/3 for j,t in index_line_period),name='c_16_1')
+        else:
+            m.addConstrs(
+                (N_hat[j, t] >= 10*self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1]+1/3 for j, t in index_line_period),
+                name='c_16_0')
+            m.addConstrs(
+                (N_hat[j, t] <= 40 * self._distance[j - 1] / self._speed[j - 1][t - 1] for j, t in index_line_period),
+                name='c_16_1')
         m.addConstrs((N_tilde[j,t]-100*delta[j,t]<=0 for j,t in index_line_period),name='c_17')
         m.addConstrs((N_tilde[j,t]-delta[j,t]>=0 for j,t in index_line_period),name='c_18')
         m.addConstrs((N_tilde[j,t]-N_hat[j,t]+100-100*delta[j,t]>=0 for j,t in index_line_period),name='c_19')
@@ -1812,6 +1893,7 @@ class FOT(object):
             u_1 = sub_result_dict['u_1']  # u_1[j,t]
             u_2 = sub_result_dict['u_2']  # u_2[j,t]
             u_5=sub_result_dict['u_5']
+            u_6 = sub_result_dict['u_6']
             #u_u=sub_result_dict['u_u']
             # u_6=sub_result_dict['u_6']
             # u_7=sub_result_dict['u_7']
@@ -1822,6 +1904,7 @@ class FOT(object):
             lambda_1=sub_result_dict['lambda_1']#lambda_1[j,t]
             lambda_2=sub_result_dict['lambda_2']#lambda_2[j,t]
             lambda_5=sub_result_dict['lambda_5']
+            lambda_6 = sub_result_dict['lambda_6']
             #lambda_lambda=sub_result_dict['lambda_lambda']
             # lambda_6=sub_result_dict['lambda_6']
             # lambda_7=sub_result_dict['lambda_7']
@@ -1966,6 +2049,17 @@ class FOT(object):
                                 - 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
                                 - 2 * self._t_u * H[j,t] * m_zeta[j, t]
                                 - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])
+                                -1e-3
+                            )
+                            for j, t in index_line_period
+                        )
+                        + gp.quicksum(
+                            u_6[j, t] * (
+                                -1e-3
+                                -m_N_hat[j, t] * H[j, t]
+                                + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
+                                + 2 * self._t_u * H[j, t] * m_zeta[j, t]
+                                + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])
                             )
                             for j, t in index_line_period
                         )
@@ -2174,9 +2268,20 @@ class FOT(object):
                             - 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
                             - 2 * self._t_u * H[j,t] * m_zeta[j, t]
                             - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])
+                            -1e-3
                     )
                     for j, t in index_line_period
                 )
+                +gp.quicksum(
+                    lambda_6[j, t] * (
+                            -1e-3
+                            -m_N_hat[j, t] * H[j, t]
+                            + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
+                            + 2 * self._t_u * H[j, t] * m_zeta[j, t]
+                            + 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])
+                        )
+                        for j, t in index_line_period
+                    )
                 <= -1e-4
             )
         '''
@@ -2465,11 +2570,13 @@ class FOT(object):
                     u_1 = result_s['u_1']
                     u_2 = result_s['u_2']
                     u_5 = result_s['u_5']
+                    u_6 = result_s['u_6']
                 else:
                     u_0 = result_s['lambda_0']
                     u_1 = result_s['lambda_1']
                     u_2 = result_s['lambda_2']
                     u_5 = result_s['lambda_5']
+                    u_6 = result_s['lambda_6']
                 m_N_hat = y['N_hat']
                 m_N_tilde = y['N_tilde']
                 m_N_bar = y['N_bar']
@@ -2483,6 +2590,7 @@ class FOT(object):
                 print('u_1:', u_1)
                 print('u_2:', u_2)
                 print('u_5:', u_5)
+                print('u_6:', u_6)
                 print('constraint 0')
                 sum_zc=0
                 for j in range(1,self._routeNo+1):
@@ -2521,10 +2629,22 @@ class FOT(object):
                     for t in range(1,self._period+1):
                         zc=m_N_hat[j,t]*H[j,t]-(
                             2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*m_xi[j,t]
-                            +2*self._t_u/self._peak_point_demand[j-1][t-1]*m_zeta[j,t]*S[1]
+                            +2*self._t_u*m_zeta[j,t]*H[j,t]
+                            +2*self._distance[j-1]/self._speed[j-1][t-1]*(1-m_xi[j,t])
+                        )-1e-3
+                        zc_zc = u_5[j, t] * zc
+                        sum_zc = sum_zc + zc_zc
+                        print('({},{}): {},{}'.format(j,t,zc,zc_zc))
+                print('sum_zc',sum_zc)
+                print('constraint 6')
+                for j in range(1,self._routeNo+1):
+                    for t in range(1,self._period+1):
+                        zc=-1e-3-m_N_hat[j,t]*H[j,t]+(
+                            2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*m_xi[j,t]
+                            +2*self._t_u*m_zeta[j,t]*H[j,t]
                             +2*self._distance[j-1]/self._speed[j-1][t-1]*(1-m_xi[j,t])
                         )
-                        zc_zc = u_5[j, t] * zc
+                        zc_zc = u_6[j, t] * zc
                         sum_zc = sum_zc + zc_zc
                         print('({},{}): {},{}'.format(j,t,zc,zc_zc))
                 print('sum_zc',sum_zc)
