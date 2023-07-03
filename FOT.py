@@ -40,7 +40,7 @@ def load_pickle(path):
                 break
 
 class FOT(object):
-    def __init__(self, routeNo, distance, average_distance, speed, demand, peak_point_demand):
+    def __init__(self, routeNo, distance, average_distance, speed, demand, peak_point_demand,rate_speed,rate_demand):
         self._gammar=25 #$/veh.hr
         self._beta=0.25 #$/veh.seat.hr
 
@@ -48,7 +48,7 @@ class FOT(object):
         self._v_v=6     #time value of in-vehicle time $/pax.hr
 
         self._t_u=1.0/180   #hr/parcel
-        self._alpha=1.2 #[0.6,0.8,1,1.2,1.5]
+        self._alpha=rate_speed #[0.6,0.8,1,1.2,1.5]
 
         self._c=16000   #$/veh
         self._e=2400    #$/veh
@@ -68,11 +68,13 @@ class FOT(object):
         self._speed=speed
         self._period = len(speed[0])
         self._routeNo=routeNo
-
-        self._d_i, self._d_j = self.generate_freight_demand()
+        self._rate=rate_demand
+        self._d_i, self._d_j = self.generate_freight_demand(self._rate)
         print(self._m_j,self._d_j)
 
         self._path='data.pickle'
+
+        self._epsilon=0.6
 
     @property
     def beta(self):
@@ -148,11 +150,11 @@ class FOT(object):
     #     result=self.Optimal()
     #     return result
 
-    def generate_freight_demand(self):
+    def generate_freight_demand(self,n):
         value=np.max(self._m_j)
         d_i=np.zeros((self._routeNo,value))
         for row,item in enumerate(self._m_j):
-            d_i[row, :item] = np.random.randint(40, 100, item)
+            d_i[row, :item] = n*np.random.randint(40, 100, item)
         d_j=d_i.sum(axis=1)
         return d_i,d_j
 
@@ -269,6 +271,7 @@ class FOT(object):
 
         m1.addConstr(self._eta * (S[1] - S[2]) + 1 <= 0, name='sub_3')
         m1.addConstr(self._eta * (S[2] - S[1]) - 6 <= 0, name='sub_4')
+        m1.addConstr(S[1]>=5)
         #m1.addConstr(S[1]<=80,name='sub_s')
 
         # m1.addConstrs((
@@ -283,10 +286,10 @@ class FOT(object):
             - 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['delta'][j, t] * y['X'][j, t]
             - 2 * self._t_u  * H[j,t] * y['q'][j, t] * y['X'][j, t] * y['delta'][
                 j, t]
-            - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])-1 <= 0
+            - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])-self._epsilon <= 0
             for j, t in index_line_period), name='sub_5')
         m1.addConstrs((
-            -1
+            -self._epsilon
             -y['N_hat'][j, t] * H[j, t]
             + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['delta'][j, t] * y['X'][j, t]
             + 2 * self._t_u * H[j, t] * y['q'][j, t] * y['X'][j, t] * y['delta'][
@@ -405,10 +408,10 @@ class FOT(object):
                         y['X'][j, t]
                         - 2 * self._t_u * H[j,t] * y['q'][j, t] * y['X'][j, t] *
                         y['delta'][j, t]
-                        - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])-1
+                        - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])-self._epsilon
                 )
                 + u_6[j, t] * (
-                        -1
+                        -self._epsilon
                         -y['N_hat'][j, t] * H[j, t]
                         + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['delta'][j, t] *
                         y['X'][j, t]
@@ -500,10 +503,10 @@ class FOT(object):
                         - 2 * self._t_u  * H[j,t] * y['q'][j, t] * y['X'][j, t] *
                         y['delta'][j, t]
                         - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                        -1
+                        -self._epsilon
                 )
                 + u_6[j, t] * (
-                        -1
+                        -self._epsilon
                         -y['N_hat'][j, t] * H[j, t]
                         + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
                         y['delta'][j, t]
@@ -1152,13 +1155,13 @@ class FOT(object):
                         - 2 * self._t_u  * m2_H[j,t] * y['q'][j, t] * y['X'][
                             j, t] * y['delta'][j, t]
                         - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - y['X'][j, t] * y['delta'][j, t])
-                        -1
+                        -self._epsilon
                 )
                 for j, t in index_line_period
             )
             m2_obj = m2_obj + gp.quicksum(
                 lambda_6[j, t] * (
-                        -1
+                        -self._epsilon
                         -y['N_hat'][j, t] * m2_H[j, t]
                         + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
                         y['delta'][j, t]
@@ -1220,13 +1223,13 @@ class FOT(object):
                                 j, t] * y['delta'][j, t]
                             - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (
                                     1 - y['X'][j, t] * y['delta'][j, t])
-                            -1
+                            -self._epsilon
                     )
                     for j, t in index_line_period
                 )
                 + gp.quicksum(
                     lambda_6[j, t] * (
-                            -1
+                            -self._epsilon
                             -y['N_hat'][j, t] * m2_H[j, t]
                             + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * y['X'][j, t] *
                             y['delta'][j, t]
@@ -2058,13 +2061,13 @@ class FOT(object):
                                 - 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
                                 - 2 * self._t_u * H[j,t] * m_zeta[j, t]
                                 - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])
-                                -1
+                                -self._epsilon
                             )
                             for j, t in index_line_period
                         )
                         + gp.quicksum(
                             u_6[j, t] * (
-                                -1
+                                -self._epsilon
                                 -m_N_hat[j, t] * H[j, t]
                                 + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
                                 + 2 * self._t_u * H[j, t] * m_zeta[j, t]
@@ -2277,13 +2280,13 @@ class FOT(object):
                             - 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
                             - 2 * self._t_u * H[j,t] * m_zeta[j, t]
                             - 2 * self._distance[j - 1] / self._speed[j - 1][t - 1] * (1 - m_xi[j, t])
-                            -1
+                            -self._epsilon
                     )
                     for j, t in index_line_period
                 )
                 +gp.quicksum(
                     lambda_6[j, t] * (
-                            -1
+                            -self._epsilon
                             -m_N_hat[j, t] * H[j, t]
                             + 2 * self._alpha * self._distance[j - 1] / self._speed[j - 1][t - 1] * m_xi[j, t]
                             + 2 * self._t_u * H[j, t] * m_zeta[j, t]
@@ -2500,12 +2503,13 @@ class FOT(object):
         '''
         UB_LB_tol_dict={}
         UB=float('inf')
-        LB=-float('inf')
+        LB=0
         tol=float('inf')
 
         iter=0
 
         y=y_initial
+        self._path='data_'+'alpha_'+str(self._alpha)+'_demand_'+str(self._rate)+'.pickle'
         m=self.SetupMasterProblemModel()
         with open(self._path,'wb') as f:
             #result_s = self.SubProblem(y, [], [])
@@ -2523,7 +2527,7 @@ class FOT(object):
                 pickle.dump(result_s,f)
                 ob=result_s['objval']
                 UB=min(UB,ob)
-
+                tol=UB-LB
                 y=self.solveMaster(m,result_s)
                 # print(result_s['S'])
                 # print(result_s['u_0'])
@@ -2566,7 +2570,7 @@ class FOT(object):
                 obj=y['y_0']
                 LB=max(LB,obj)
 
-                tol=UB-LB
+                #tol=UB-LB
                 logger.info("tol: %s"%(tol))
                 logger.info("y[q]: %s"%(y['q']))
                 iter+=1
@@ -2640,7 +2644,7 @@ class FOT(object):
                             2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*m_xi[j,t]
                             +2*self._t_u*m_zeta[j,t]*H[j,t]
                             +2*self._distance[j-1]/self._speed[j-1][t-1]*(1-m_xi[j,t])
-                        )-1
+                        )-self._epsilon
                         zc_zc = u_5[j, t] * zc
                         sum_zc = sum_zc + zc_zc
                         print('({},{}): {},{}'.format(j,t,zc,zc_zc))
@@ -2648,7 +2652,7 @@ class FOT(object):
                 print('constraint 6')
                 for j in range(1,self._routeNo+1):
                     for t in range(1,self._period+1):
-                        zc=-1-m_N_hat[j,t]*H[j,t]+(
+                        zc=-self._epsilon-m_N_hat[j,t]*H[j,t]+(
                             2*self._alpha*self._distance[j-1]/self._speed[j-1][t-1]*m_xi[j,t]
                             +2*self._t_u*m_zeta[j,t]*H[j,t]
                             +2*self._distance[j-1]/self._speed[j-1][t-1]*(1-m_xi[j,t])

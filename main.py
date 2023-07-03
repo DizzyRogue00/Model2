@@ -32,7 +32,7 @@ def load_pickle(path):
                 logger.error('Error', exc_info=True)
                 break
 
-def Freight_Systemwide(routeNo,distance,average_distance,speed,demand,peak_point_demand,type):
+def Freight_Systemwide(routeNo,distance,average_distance,speed,demand,peak_point_demand,type,rate_speed=1.2,rate_demand=1):
     typeList=['OneS','TwoS','TwoSF']
     result=None
     if type not in typeList:
@@ -68,7 +68,7 @@ def Freight_Systemwide(routeNo,distance,average_distance,speed,demand,peak_point
             pickle.dump(result,f)
         logger.info('Two size systemwide finished! ')
     elif type==typeList[2]:
-        case3=fot.FOT(routeNo, distance, average_distance, speed, demand, peak_point_demand)
+        case3=fot.FOT(routeNo, distance, average_distance, speed, demand, peak_point_demand,rate_speed,rate_demand)
         #generate y_initial
         # if os.path.exists('data_two.pickle'):
         #     with open('data_two.pickle','rb') as f:
@@ -172,13 +172,13 @@ if __name__=="__main__":
     '''
 
     # #typeList=['OneS','TwoS','TwoSF']
-    # result_oneSize=Freight_Systemwide(5, distance, average_distance, speed, demand, peak_point_demand, 'OneS')
-    # print(result_oneSize)
-    # logger.info('The result of one size is\n {}'.format(result_oneSize))
-    # result_twoSize = Freight_Systemwide(5, distance, average_distance, speed, demand, peak_point_demand, 'TwoS')
-    # print(result_twoSize[len(result_twoSize)-1]['fleet'])
-    # print(result_twoSize[len(result_twoSize) - 1]['solution'])
-    # logger.info('The result of two-size systemwide is \n {}'.format(result_twoSize[len(result_twoSize)-1]))
+    result_oneSize=Freight_Systemwide(5, distance, average_distance, speed, demand, peak_point_demand, 'OneS')
+    print(result_oneSize)
+    logger.info('The result of one size is\n {}'.format(result_oneSize))
+    result_twoSize = Freight_Systemwide(5, distance, average_distance, speed, demand, peak_point_demand, 'TwoS')
+    print(result_twoSize[len(result_twoSize)-1]['fleet'])
+    print(result_twoSize[len(result_twoSize) - 1]['solution'])
+    logger.info('The result of two-size systemwide is \n {}'.format(result_twoSize[len(result_twoSize)-1]))
     result_twoSizeF=Freight_Systemwide(5, distance, average_distance, speed, demand, peak_point_demand, 'TwoSF')
     print(result_twoSizeF)
     print(result_twoSizeF[0]['headway'])
