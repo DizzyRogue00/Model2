@@ -229,9 +229,9 @@ def draw_schedule_HSN(routeNo, distance, average_distance, speed, demand, peak_p
         for t in range(1, period+1):
             sum_o = sum_o + 2 * distance[j - 1] * (case.gammar + case.beta * data_x['S'][1]) * peak_point_demand[j - 1][t - 1] / \
                     data_x['v_hat'][j, t] / data_x['S'][1] * data_y['X'][j, t] * data_y['delta'][j, t]
-            sum_o = sum_o + 2 * distance[j - 1] * (case.gamma + case.beta * data_x['S'][1]) * peak_point_demand[j - 1][t - 1] / \
+            sum_o = sum_o + 2 * distance[j - 1] * (case.gammar + case.beta * data_x['S'][1]) * peak_point_demand[j - 1][t - 1] / \
                     speed[j - 1][t - 1] / data_x['v_hat'][j, t] * (1 - data_y['X'][j, t]) * data_y['delta'][j, t]
-            sum_o = sum_o + 2 * distance[j - 1] * (case.gamma + case.beta * data_x['S'][2]) * peak_point_demand[j - 1][t - 1] / \
+            sum_o = sum_o + 2 * distance[j - 1] * (case.gammar + case.beta * data_x['S'][2]) * peak_point_demand[j - 1][t - 1] / \
                     speed[j - 1][t - 1] / data_x['S'][2] * (1 - data_y['delta'][j, t])
 
             sum_uw = sum_uw + case.v_w * demand[j - 1][t - 1] * data_x['S'][1] / peak_point_demand[j - 1][t - 1] * \
@@ -272,62 +272,124 @@ def draw_schedule_HSN(routeNo, distance, average_distance, speed, demand, peak_p
     H_peak_mean=np.mean(H_peak)
     H_off_peak_mean=np.mean(H_off_peak)
 
-    if rate_demand/0.5 in [1.0,2.0,3.0,4.0]:
-        scatter_x = [list(np.arange(6.5, 24, step=1))] * 3 *routeNo
-        scatter_y = [[i] * period for i in np.arange(3*routeNo, 0, step=-1)]
-        scatter_color = []
-        for j in range(1, routeNo+1):
-            j_x = []
-            j_delta = []
-            j_q = []
-            for t in range(1, period+1):
-                if data_y['X'][j, t] == 1:
-                    j_x.append('firebrick')
-                else:
-                    j_x.append('w')
-                if data_y['delta'][j, t] == 1:
-                    j_delta.append('#7BA23F')
-                else:
-                    j_delta.append('w')
-                j_q.append(data_y['q'][j, t])
-            scatter_color.append(j_q)
-            scatter_color.append(j_x)
-            scatter_color.append(j_delta)
-        fig, ax = plt.subplots(figsize=(16, 10), dpi=300)
-        ax.hlines(y=range(1, 16), xmin=6, xmax=24, color='gray', alpha=0.5, linewidth=.5, linestyles='dashdot')
-        for j in range(1, routeNo+1):
-            ax.scatter(x=scatter_x[3 * j - 1], y=scatter_y[3 * j - 1], c=scatter_color[3 * j - 1], linewidths=0.5,
-                       edgecolors='gray', s=50)
-            ax.scatter(x=scatter_x[3 * j - 2], y=scatter_y[3 * j - 2], c=scatter_color[3 * j - 2], linewidths=0.5,
-                       edgecolors='gray', s=50)
-            sc = ax.scatter(x=scatter_x[3 * j - 3], y=scatter_y[3 * j - 3], c=scatter_color[3 * j - 3], cmap='Blues',
-                            linewidths=0.5, edgecolors='gray', s=50)
-        cb = plt.colorbar(sc)
-        cb.ax.tick_params(labelsize=5, direction='inout')
-        plt.plot([], [], marker="o", ms=5, ls="", mec=None, color='firebrick', label=r"$X$")
-        plt.plot([], [], marker="o", ms=5, ls="", mec=None, color='#7BA23F', label=r"$\delta$")
-        plt.legend(loc='upper right', fontsize=5, bbox_to_anchor=(1.065, 1), markerscale=1., framealpha=0.5,
-                   frameon=False, facecolor='white')
-        ax.set_xlabel('Time', fontsize=5, fontweight='bold')
-        ax.set_ylabel('Bus Route', fontsize=5, fontweight='bold')
-        ax.set_xticks(np.arange(6, 24, step=1))
-        ax.set_yticks(range(1, 16))
-        ax.set_xticklabels(np.arange(6, 24, step=1), fontdict=dict(fontweight='bold'), alpha=0.7, fontsize=5)
-        ax.set_yticklabels([5, 5, 5, 4, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1], fontdict=dict(fontweight='bold'), alpha=0.7,
-                           fontsize=5)
-        plt.gca().spines["top"].set_visible(False)
-        plt.gca().spines["bottom"].set_visible(False)
-        plt.gca().spines["right"].set_visible(False)
-        plt.gca().spines["left"].set_visible(False)
-        plt.grid(axis='both', alpha=.4, linewidth=.1)
-        # plt.show(block=True)
-        plt.tight_layout()
-        name_pdf='Results/Bus dispatch schedule_speedRate_1.2_demandRate_'+str(rate_demand)+'pdf'
-        name_png = 'Results/Bus dispatch schedule_speedRate_1.2_demandRate_' + str(rate_demand) + 'png'
-        plt.savefig(name_pdf, dpi=1000, format='pdf')
-        plt.savefig(name_png, dpi=1000, format='png')
+    # if rate_demand/0.5 in [1.0,2.0,3.0,4.0]:
+    #     scatter_x = [list(np.arange(6.5, 24, step=1))] * 3 *routeNo
+    #     scatter_y = [[i] * period for i in np.arange(3*routeNo, 0, step=-1)]
+    #     scatter_color = []
+    #     for j in range(1, routeNo+1):
+    #         j_x = []
+    #         j_delta = []
+    #         j_q = []
+    #         for t in range(1, period+1):
+    #             if data_y['X'][j, t] == 1:
+    #                 j_x.append('firebrick')
+    #             else:
+    #                 j_x.append('w')
+    #             if data_y['delta'][j, t] == 1:
+    #                 j_delta.append('#7BA23F')
+    #             else:
+    #                 j_delta.append('w')
+    #             j_q.append(data_y['q'][j, t])
+    #         scatter_color.append(j_q)
+    #         scatter_color.append(j_x)
+    #         scatter_color.append(j_delta)
+    #     fig, ax = plt.subplots(figsize=(16, 10), dpi=300)
+    #     ax.hlines(y=range(1, 16), xmin=6, xmax=24, color='gray', alpha=0.5, linewidth=.5, linestyles='dashdot')
+    #     for j in range(1, routeNo+1):
+    #         ax.scatter(x=scatter_x[3 * j - 1], y=scatter_y[3 * j - 1], c=scatter_color[3 * j - 1], linewidths=0.5,
+    #                    edgecolors='gray', s=50)
+    #         ax.scatter(x=scatter_x[3 * j - 2], y=scatter_y[3 * j - 2], c=scatter_color[3 * j - 2], linewidths=0.5,
+    #                    edgecolors='gray', s=50)
+    #         sc = ax.scatter(x=scatter_x[3 * j - 3], y=scatter_y[3 * j - 3], c=scatter_color[3 * j - 3], cmap='Blues',
+    #                         linewidths=0.5, edgecolors='gray', s=50)
+    #     cb = plt.colorbar(sc)
+    #     cb.ax.tick_params(labelsize=5, direction='inout')
+    #     plt.plot([], [], marker="o", ms=5, ls="", mec=None, color='firebrick', label=r"$X$")
+    #     plt.plot([], [], marker="o", ms=5, ls="", mec=None, color='#7BA23F', label=r"$\delta$")
+    #     plt.legend(loc='upper right', fontsize=5, bbox_to_anchor=(1.065, 1), markerscale=1., framealpha=0.5,
+    #                frameon=False, facecolor='white')
+    #     ax.set_xlabel('Time', fontsize=5, fontweight='bold')
+    #     ax.set_ylabel('Bus Route', fontsize=5, fontweight='bold')
+    #     ax.set_xticks(np.arange(6, 24, step=1))
+    #     ax.set_yticks(range(1, 16))
+    #     ax.set_xticklabels(np.arange(6, 24, step=1), fontdict=dict(fontweight='bold'), alpha=0.7, fontsize=5)
+    #     ax.set_yticklabels([5, 5, 5, 4, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1], fontdict=dict(fontweight='bold'), alpha=0.7,
+    #                        fontsize=5)
+    #     plt.gca().spines["top"].set_visible(False)
+    #     plt.gca().spines["bottom"].set_visible(False)
+    #     plt.gca().spines["right"].set_visible(False)
+    #     plt.gca().spines["left"].set_visible(False)
+    #     plt.grid(axis='both', alpha=.4, linewidth=.1)
+    #     # plt.show(block=True)
+    #     plt.tight_layout()
+    #     name_pdf='Results/Bus dispatch schedule_speedRate_1.2_demandRate_'+str(rate_demand)+'pdf'
+    #     name_png = 'Results/Bus dispatch schedule_speedRate_1.2_demandRate_' + str(rate_demand) + 'png'
+    #     plt.savefig(name_pdf, dpi=1000, format='pdf')
+    #     plt.savefig(name_png, dpi=1000, format='png')
 
     return case_d,dr_ratio,sum_o,sum_uw,sum_uv,sum_p,sum_dr,N_bar,S,H_peak,H_off_peak,(H_peak_mean,H_off_peak_mean)
+
+def draw_scheduel_on_PC(routeNo,period,rate_demand):
+    path='data_alpha_1.2_demand_'+str(rate_demand)+',pickle'
+    result = load_pickle(path)
+    result= list(result)
+    print('OK',rate_demand)
+    data_x = result[-3]
+    data_y = result[-2]
+    scatter_x = [list(np.arange(6.5, 24, step=1))] * 3 *routeNo
+    scatter_y = [[i] * period for i in np.arange(3*routeNo, 0, step=-1)]
+    scatter_color = []
+    for j in range(1, routeNo+1):
+        j_x = []
+        j_delta = []
+        j_q = []
+        for t in range(1, period+1):
+            if data_y['X'][j, t] == 1:
+                j_x.append('firebrick')
+            else:
+                j_x.append('w')
+            if data_y['delta'][j, t] == 1:
+                j_delta.append('#7BA23F')
+            else:
+                j_delta.append('w')
+            j_q.append(data_y['q'][j, t])
+        scatter_color.append(j_q)
+        scatter_color.append(j_x)
+        scatter_color.append(j_delta)
+    fig, ax = plt.subplots(figsize=(16, 10), dpi=300)
+    ax.hlines(y=range(1, 16), xmin=6, xmax=24, color='gray', alpha=0.5, linewidth=.5, linestyles='dashdot')
+    for j in range(1, routeNo+1):
+        ax.scatter(x=scatter_x[3 * j - 1], y=scatter_y[3 * j - 1], c=scatter_color[3 * j - 1], linewidths=0.5,
+                       edgecolors='gray', s=50)
+        ax.scatter(x=scatter_x[3 * j - 2], y=scatter_y[3 * j - 2], c=scatter_color[3 * j - 2], linewidths=0.5,
+                       edgecolors='gray', s=50)
+        sc = ax.scatter(x=scatter_x[3 * j - 3], y=scatter_y[3 * j - 3], c=scatter_color[3 * j - 3], cmap='Blues',
+                            linewidths=0.5, edgecolors='gray', s=50)
+    cb = plt.colorbar(sc)
+    cb.ax.tick_params(labelsize=5, direction='inout')
+    plt.plot([], [], marker="o", ms=5, ls="", mec=None, color='firebrick', label=r"$X$")
+    plt.plot([], [], marker="o", ms=5, ls="", mec=None, color='#7BA23F', label=r"$\delta$")
+    plt.legend(loc='upper right', fontsize=5, bbox_to_anchor=(1.065, 1), markerscale=1., framealpha=0.5,
+                   frameon=False, facecolor='white')
+    ax.set_xlabel('Time', fontsize=5, fontweight='bold')
+    ax.set_ylabel('Bus Route', fontsize=5, fontweight='bold')
+    ax.set_xticks(np.arange(6, 24, step=1))
+    ax.set_yticks(range(1, 16))
+    ax.set_xticklabels(np.arange(6, 24, step=1), fontdict=dict(fontweight='bold'), alpha=0.7, fontsize=5)
+    ax.set_yticklabels([5, 5, 5, 4, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1], fontdict=dict(fontweight='bold'), alpha=0.7,
+                           fontsize=5)
+    plt.gca().spines["top"].set_visible(False)
+    plt.gca().spines["bottom"].set_visible(False)
+    plt.gca().spines["right"].set_visible(False)
+    plt.gca().spines["left"].set_visible(False)
+    plt.grid(axis='both', alpha=.4, linewidth=.1)
+        # plt.show(block=True)
+    plt.tight_layout()
+    name_pdf='Results/Bus dispatch schedule_speedRate_1.2_demandRate_'+str(rate_demand)+'pdf'
+    name_png = 'Results/Bus dispatch schedule_speedRate_1.2_demandRate_' + str(rate_demand) + 'png'
+    plt.savefig(name_pdf, dpi=1000, format='pdf')
+    plt.savefig(name_png, dpi=1000, format='png')
+    plt.show(block=True)
 
 analy={}
 analy['dr_ratio']=[]
@@ -348,4 +410,4 @@ for item in demand_rate:
     analy['H_peak'].append(result[11][0])
     analy['H_off_peak'].append(result[11][1])
 my_df=pd.DataFrame(analy,index=demand_rate)
-my_df.to_csv('Sensitive analysis on demand')
+my_df.to_csv('Sensitive analysis on demand.csv')
