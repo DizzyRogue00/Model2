@@ -146,6 +146,13 @@ class FOT(object):
     def eta(self,value):
         self._eta=value
 
+    @property
+    def v_p(self):
+        return self._v_p
+    @v_p.setter
+    def v_p(self,value):
+        self._v_p=value
+
     # def __call__(self, *args, **kwargs):
     #     result=self.Optimal()
     #     return result
