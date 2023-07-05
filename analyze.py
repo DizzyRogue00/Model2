@@ -330,7 +330,7 @@ def draw_schedule_HSN(routeNo, distance, average_distance, speed, demand, peak_p
     return case_d,dr_ratio,sum_o,sum_uw,sum_uv,sum_p,sum_dr,N_bar,S,H_peak,H_off_peak,(H_peak_mean,H_off_peak_mean)
 
 def draw_scheduel_on_PC(routeNo,period,rate_demand):
-    path='data_alpha_1.2_demand_'+str(rate_demand)+',pickle'
+    path='data_alpha_1.2_demand_'+str(rate_demand)+'.pickle'
     result = load_pickle(path)
     result= list(result)
     print('OK',rate_demand)
@@ -385,8 +385,8 @@ def draw_scheduel_on_PC(routeNo,period,rate_demand):
     plt.grid(axis='both', alpha=.4, linewidth=.1)
         # plt.show(block=True)
     plt.tight_layout()
-    name_pdf='Results/Bus dispatch schedule_speedRate_1.2_demandRate_'+str(rate_demand)+'pdf'
-    name_png = 'Results/Bus dispatch schedule_speedRate_1.2_demandRate_' + str(rate_demand) + 'png'
+    name_pdf='Results/Bus dispatch schedule_speedRate_1.2_demandRate_'+str(rate_demand)+'.pdf'
+    name_png = 'Results/Bus dispatch schedule_speedRate_1.2_demandRate_' + str(rate_demand) + '.png'
     plt.savefig(name_pdf, dpi=1000, format='pdf')
     plt.savefig(name_png, dpi=1000, format='png')
     plt.show(block=True)
@@ -411,3 +411,40 @@ for item in demand_rate:
     analy['H_off_peak'].append(result[11][1])
 my_df=pd.DataFrame(analy,index=demand_rate)
 my_df.to_csv('Sensitive analysis on demand.csv')
+
+for item in [0.5,1,1.5,2.0]:
+    draw_scheduel_on_PC(5,18,item)
+
+df=pd.read_csv('Sensitive analysis on demand')
+df.loc[13,'N_bar1']=24
+df.loc[13,'H_peak']=0.08
+plt.figure(num=6,facecolor='white',edgecolor='black')
+plt.rcParams['font.family']='serif'
+plt.rcParams['font.serif']='Times New Roman'
+lns1=plt.bar(list(df['Unnamed: 0']),list(df['N_bar1']),width=0.08,color="#77428D",edgecolor="k",label=r"$N_1$")
+#plt.yticks(range(10, 15), fontweight='bold')
+# plt.legend(loc="upper left")
+plt.xlabel(r"$\Delta$",fontdict=dict(fontweight='bold'))
+plt.ylabel('Bus fleet size',fontweight='bold')
+plt.grid(False)
+
+ax2=plt.twinx()
+ax2.set_ylabel('Peak-time headway',fontdict=dict(fontweight='bold'))
+ax2.set_ylim([0.01,0.1])
+lns2=ax2.plot(list(df['Unnamed: 0']),list(df['H_peak']),marker="^",c='#51050F',ms=5,linewidth='1',label='Peak-time headway')
+# plt.legend(loc='upper left')
+# lns=lns1+lns2
+# labs=[lns1.get_label(),lns2.get_label()]
+labs=[r"$N_1$",'Peak-time headway']
+ax=plt.gca()
+ax.spines['bottom'].set(visible=True, color='k', linewidth=.8)
+ax.spines['left'].set(visible=True, color='k', linewidth=.8)
+ax.spines['right'].set(visible=True, color='k', linewidth=.8)
+ax.spines['top'].set(visible=True, color='k', linewidth=.8)
+ax.set_facecolor("w")
+#legend_label=[r"$N_1$",'Peak-time headway']
+ax.legend([lns1,lns2[0]],labs,loc='upper left',markerscale=1.5,framealpha=0.5,edgecolor=None)
+plt.grid(False)
+plt.savefig('Bus fleet size and peak-time headway when freight demand vary.pdf', dpi=1000, format='pdf')
+plt.savefig('Bus fleet size and peak-time headway when freight demand vary.png', dpi=1000, format='png')
+plt.show(block=True)
